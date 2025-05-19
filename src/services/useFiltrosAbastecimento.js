@@ -45,10 +45,11 @@ export function useFiltrosAbastecimento(registros, veiculosUsuario, veiculosEmpr
       .filter(item => filtrarPorData(item?.data, dataInicio, dataFim))
       .reduce((total, item) => total + Number(item?.litros || 0), 0);
 
-    return {
-      ...v,
-      litrosPeriodo: litrosKM + litrosZerado
-    };
+      const isDataAtual = !dataInicio || !dataFim || dayjs().isSame(dayjs(dataInicio), 'day') && dayjs().isSame(dayjs(dataFim), 'day');
+      return {
+        ...v,
+        litrosPeriodo: isDataAtual ? Number(v['ABASTECIMENTO-DISPONIVELE-LITRO'] || 0) : litrosKM + litrosZerado
+      };
   });
 
   // ✅ Calcula para veículos da empresa com comprovante
@@ -73,16 +74,27 @@ export function useFiltrosAbastecimento(registros, veiculosUsuario, veiculosEmpr
         return [];
       }
     }
-    return (lista || []).map(veic => {
-      const comprovantes = comprovantesEmpresa.filter(c => c.veiculo === veic.veiculo);
-      const litrosPeriodo = comprovantes.reduce((total, c) =>
-        total + Number(c.litros || 0), 0
-      );
-      return {
-        ...veic,
-        litrosPeriodo
-      };
-    });
+      return (lista || []).map(veic => {
+        const isDataAtual = !dataInicio || !dataFim || dayjs().isSame(dayjs(dataInicio), 'day') && dayjs().isSame(dayjs(dataFim), 'day');
+
+        if (isDataAtual) {
+          return {
+            ...veic,
+            litrosPeriodo: Number(veic['ABASTECIMENTO-DISPONIVELE-LITRO'] || 0)
+          };
+        } else {
+          const comprovantes = comprovantesEmpresa.filter(c => c.veiculo === veic.veiculo);
+          const litrosPeriodo = comprovantes.reduce((total, c) =>
+            total + Number(c.litros || 0), 0
+          );
+          return {
+            ...veic,
+            litrosPeriodo
+          };
+        }
+      });
+
+
   });
 
   // Totais

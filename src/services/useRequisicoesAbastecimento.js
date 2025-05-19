@@ -7,6 +7,7 @@ export function useRequisicoesAbastecimento() {
   const [veiculosUsuario, setVeiculosUsuario] = useState([]);
   const [veiculosEmpresa, setVeiculosEmpresa] = useState([]);
   const [carregando, setCarregando] = useState(true);
+  const [updateTrigger, setUpdateTrigger] = useState(Date.now()); // 👈 novo estado
 
   useEffect(() => {
     const carregar = async () => {
@@ -20,6 +21,7 @@ export function useRequisicoesAbastecimento() {
         setRegistros(km);
         setVeiculosUsuario(userVeiculos);
         setVeiculosEmpresa(empresaVeiculos);
+        setUpdateTrigger(Date.now()); // 👈 força atualização
       } catch (err) {
         console.error('Erro ao carregar dados do painel:', err);
       } finally {
@@ -37,5 +39,6 @@ export function useRequisicoesAbastecimento() {
     veiculosUsuario,
     veiculosEmpresa,
     carregando,
+    updateTrigger // 👈 exporta para o PainelAbastecimento
   };
 }

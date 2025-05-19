@@ -18,7 +18,7 @@ export default function PainelAbastecimento() {
   const [modoCalculo, setModoCalculo] = useState('todos');
   const { isOpen, onOpen, onClose } = useDisclosure();
 
-  const { registros, veiculosUsuario, veiculosEmpresa, carregando } = useRequisicoesAbastecimento();
+  const { registros, veiculosUsuario, veiculosEmpresa, carregando, updateTrigger  } = useRequisicoesAbastecimento();
 
   const [filtros, setFiltros] = useState({
     litrosVeiculosUsuarioNoPeriodo: [],
@@ -44,7 +44,7 @@ export default function PainelAbastecimento() {
       totalLitros,
       litrosPorVeiculo
     });
-  }, [registros, veiculosUsuario, veiculosEmpresa, dataInicio, dataFim]);
+  }, [registros, veiculosUsuario, veiculosEmpresa, dataInicio, dataFim, updateTrigger]); // ✅ aqui
 
   const abrirModal = (veiculo, tipo) => {
     setVeiculoSelecionado({ veiculo, tipo });
