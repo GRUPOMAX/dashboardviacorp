@@ -30,7 +30,7 @@ export function useRequisicoesAbastecimento() {
     };
 
     carregar();
-    const intervalo = setInterval(() => carregar(), 15000);
+    const intervalo = setInterval(() => carregar(), 1000);
     return () => clearInterval(intervalo);
   }, []);
 
