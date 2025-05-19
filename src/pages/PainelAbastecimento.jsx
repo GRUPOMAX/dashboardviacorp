@@ -1,58 +1,50 @@
 import {
   Box, Heading, SimpleGrid, Stat, StatLabel, StatNumber, StatHelpText,
-  Spinner, Progress, Text, VStack, HStack, Icon, useDisclosure, Divider, Badge, IconButton
+  Spinner, Progress, Text, VStack, HStack, Icon, useDisclosure, Divider, Badge, IconButton,
+  Input, Select, FormControl, FormLabel
 } from '@chakra-ui/react';
 import { FiDroplet, FiEdit } from 'react-icons/fi';
 import { useEffect, useState } from 'react';
-import { listarRegistrosKm, listarVeiculos, listarVeiculosEmpresa } from '../services/api';
 import ModalUltimosAbastecimentos from '../components/ModalUltimosAbastecimentos';
 import ModalEditarVeiculo from '../components/ModalEditarVeiculo';
-import dayjs from 'dayjs';
-import 'dayjs/locale/pt-br';
-dayjs.locale('pt-br');
+import { useRequisicoesAbastecimento } from '../services/useRequisicoesAbastecimento';
+import { useFiltrosAbastecimento } from '../services/useFiltrosAbastecimento';
 
 export default function PainelAbastecimento() {
-  const [registros, setRegistros] = useState([]);
-  const [veiculosUsuario, setVeiculosUsuario] = useState([]);
-  const [veiculosEmpresa, setVeiculosEmpresa] = useState([]);
   const [veiculoSelecionado, setVeiculoSelecionado] = useState(null);
   const [modoEdicao, setModoEdicao] = useState(false);
-  const [carregando, setCarregando] = useState(true);
+  const [dataInicio, setDataInicio] = useState('');
+  const [dataFim, setDataFim] = useState('');
+  const [modoCalculo, setModoCalculo] = useState('todos');
   const { isOpen, onOpen, onClose } = useDisclosure();
 
+  const { registros, veiculosUsuario, veiculosEmpresa, carregando } = useRequisicoesAbastecimento();
+
+  const [filtros, setFiltros] = useState({
+    litrosVeiculosUsuarioNoPeriodo: [],
+    litrosVeiculosEmpresaNoPeriodo: [],
+    totalAbastecimentos: 0,
+    totalLitros: 0,
+    litrosPorVeiculo: {}
+  });
+
   useEffect(() => {
-    const carregar = async () => {
-      try {
-        const [km, userVeiculos, empresaVeiculos] = await Promise.all([
-          listarRegistrosKm(),
-          listarVeiculos(),
-          listarVeiculosEmpresa()
-        ]);
-        setRegistros(km);
-        setVeiculosUsuario(userVeiculos);
-        setVeiculosEmpresa(empresaVeiculos);
-      } catch (err) {
-        console.error('Erro ao carregar dados do painel:', err);
-      } finally {
-        setCarregando(false);
-      }
-    };
+    const {
+      litrosVeiculosUsuarioNoPeriodo,
+      litrosVeiculosEmpresaNoPeriodo,
+      totalAbastecimentos,
+      totalLitros,
+      litrosPorVeiculo
+    } = useFiltrosAbastecimento(registros, veiculosUsuario, veiculosEmpresa, dataInicio, dataFim);
 
-    carregar();
-    const intervalo = setInterval(() => carregar(), 1000);
-    return () => clearInterval(intervalo);
-  }, []);
-
-  const totalAbastecimentos = registros.flatMap(r =>
-    Object.values(r['KM-CONTROL-SEMANAL'] || {})
-  ).flat().filter(item => item?.['KM-Control']?.ABASTECEU).length;
-
-  const totalLitros = registros.flatMap(r =>
-    Object.values(r['KM-CONTROL-SEMANAL'] || {})
-  ).flat().reduce((total, item) => {
-    const litros = item?.['KM-Control']?.LITROS_ABASTECIDOS || 0;
-    return total + Number(litros);
-  }, 0);
+    setFiltros({
+      litrosVeiculosUsuarioNoPeriodo,
+      litrosVeiculosEmpresaNoPeriodo,
+      totalAbastecimentos,
+      totalLitros,
+      litrosPorVeiculo
+    });
+  }, [registros, veiculosUsuario, veiculosEmpresa, dataInicio, dataFim]);
 
   const abrirModal = (veiculo, tipo) => {
     setVeiculoSelecionado({ veiculo, tipo });
@@ -60,8 +52,8 @@ export default function PainelAbastecimento() {
     onOpen();
   };
 
-  const abrirModalEdicao = (veiculo) => {
-    setVeiculoSelecionado({ veiculo });
+  const abrirModalEdicao = (veiculo, tipo) => {
+    setVeiculoSelecionado({ veiculo, tipo });
     setModoEdicao(true);
     onOpen();
   };
@@ -83,58 +75,49 @@ export default function PainelAbastecimento() {
   };
 
   const CardVeiculo = ({ nome, litros, maxLitros, onClick, onEditar }) => (
-    <Box
-      p={4}
-      borderRadius="2xl"
-      bgGradient="linear(to-r, white, gray.50)"
-      boxShadow="sm"
-      border="1px solid"
-      borderColor="gray.200"
-      transition="all 0.2s"
-      w="100%"
-    >
+    <Box p={4} borderRadius="2xl" bgGradient="linear(to-r, white, gray.50)" boxShadow="sm" border="1px solid" borderColor="gray.200" transition="all 0.2s" w="100%">
       <HStack spacing={4} align="start" flexWrap="wrap">
-        <Box
-          bg="blue.100"
-          w="42px"
-          h="42px"
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-          borderRadius="full"
-          flexShrink={0}
-        >
+        <Box bg="blue.100" w="42px" h="42px" display="flex" alignItems="center" justifyContent="center" borderRadius="full" flexShrink={0}>
           <Icon as={FiDroplet} color="blue.600" boxSize={5} />
         </Box>
-
-        <VStack
-          align="start"
-          spacing={0}
-          flex={1}
-          onClick={onClick}
-          cursor="pointer"
-          wordBreak="break-word"
-        >
+        <VStack align="start" spacing={0} flex={1} onClick={onClick} cursor="pointer" wordBreak="break-word">
           <Text fontWeight="semibold" fontSize="md">{nome}</Text>
           {renderTanque(Number(litros), Number(maxLitros || 60))}
         </VStack>
-
-        <IconButton
-          size="sm"
-          icon={<FiEdit />}
-          colorScheme="blue"
-          variant="ghost"
-          aria-label="Editar Veículo"
-          onClick={onEditar}
-        />
+        <IconButton size="sm" icon={<FiEdit />} colorScheme="blue" variant="ghost" aria-label="Editar Veículo" onClick={onEditar} />
       </HStack>
     </Box>
   );
 
+  const {
+    litrosVeiculosUsuarioNoPeriodo,
+    litrosVeiculosEmpresaNoPeriodo,
+    totalAbastecimentos,
+    totalLitros,
+    litrosPorVeiculo
+  } = filtros;
 
   return (
     <Box>
       <Heading size="lg" mb={6}>Painel de Abastecimento</Heading>
+
+      <HStack spacing={4} mb={6}>
+        <FormControl>
+          <FormLabel>Data Início</FormLabel>
+          <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
+        </FormControl>
+        <FormControl>
+          <FormLabel>Data Fim</FormLabel>
+          <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
+        </FormControl>
+        <FormControl>
+          <FormLabel>Modo de Cálculo</FormLabel>
+          <Select value={modoCalculo} onChange={(e) => setModoCalculo(e.target.value)}>
+            <option value="todos">Todos os Abastecimentos</option>
+            <option value="porVeiculo">Por Veículo</option>
+          </Select>
+        </FormControl>
+      </HStack>
 
       {carregando ? (
         <Spinner size="xl" color="blue.500" />
@@ -146,25 +129,37 @@ export default function PainelAbastecimento() {
               <StatNumber color="blue.700">{totalAbastecimentos}</StatNumber>
               <StatHelpText>Desde o início</StatHelpText>
             </Stat>
-
             <Stat p={5} bg="white" borderRadius="lg" boxShadow="sm">
               <StatLabel fontSize="sm" color="gray.600">Total de Litros</StatLabel>
-              <StatNumber color="blue.700">{totalLitros.toFixed(2)} L</StatNumber>
+              <StatNumber color="blue.700">{modoCalculo === 'todos' ? totalLitros.toFixed(2) : '-'}</StatNumber>
               <StatHelpText>Registrados</StatHelpText>
             </Stat>
           </SimpleGrid>
 
+          {modoCalculo === 'porVeiculo' && (
+            <>
+              <Heading size="md" mb={4}>Litros por Veículo</Heading>
+              <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4} mb={6}>
+                {Object.entries(litrosPorVeiculo).map(([veiculo, litros]) => (
+                  <Stat key={veiculo} p={5} bg="white" borderRadius="lg" boxShadow="sm">
+                    <StatLabel fontSize="sm" color="gray.600">{veiculo}</StatLabel>
+                    <StatNumber color="blue.700">{litros.toFixed(2)} L</StatNumber>
+                  </Stat>
+                ))}
+              </SimpleGrid>
+            </>
+          )}
+
           <Divider my={6} />
           <Heading size="md" mb={4}>Veículos do Usuário</Heading>
           <SimpleGrid columns={{ base: 1, sm: 1, md: 2 }} spacing={4} mb={10}>
-            {veiculosUsuario.map((v, i) => (
+            {litrosVeiculosUsuarioNoPeriodo.map((v, i) => (
               <CardVeiculo
                 key={i}
                 nome={v['MODEL-VEHICLE']}
-                litros={v['ABASTECIMENTO-DISPONIVELE-LITRO']}
-                maxLitros={v['LITROS-MAXIMO']}
+                litros={v.litrosPeriodo}
                 onClick={() => abrirModal(v['MODEL-VEHICLE'], 'usuario')}
-                onEditar={() => abrirModalEdicao(v)}
+                onEditar={() => abrirModalEdicao(v, 'usuario')}
               />
             ))}
           </SimpleGrid>
@@ -172,44 +167,22 @@ export default function PainelAbastecimento() {
           <Divider my={6} />
           <Heading size="md" mb={4}>Veículos da Empresa</Heading>
           <SimpleGrid columns={{ base: 1, sm: 1, md: 2 }} spacing={4}>
-            {veiculosEmpresa.flatMap((v, idx) => {
-              let lista = v['Vehicle-Standard'];
-              if (typeof lista === 'string') {
-                try {
-                  lista = JSON.parse(lista);
-                } catch (e) {
-                  console.error('Erro ao parsear Vehicle-Standard', e);
-                  return [];
-                }
-              }
-
-              return (lista || []).map((veic, i) => (
-                <CardVeiculo
-                  key={`${idx}-${i}`}
-                  nome={veic.veiculo}
-                  litros={veic['ABASTECIMENTO-DISPONIVELE-LITRO']}
-                  maxLitros={veic['LITROS-MAXIMO']}
-                  onClick={() => abrirModal(veic.veiculo, 'empresa')}
-                  onEditar={() => abrirModalEdicao(veic)}
-                />
-              ));
-            })}
+            {litrosVeiculosEmpresaNoPeriodo.map((veic, i) => (
+              <CardVeiculo
+                key={`empresa-${i}`}
+                nome={veic.veiculo}
+                litros={veic.litrosPeriodo}
+                maxLitros={Number(veic['LITROS-MAXIMO'])}
+                onClick={() => abrirModal(veic.veiculo, 'empresa')}
+                onEditar={() => abrirModalEdicao(veic, 'empresa')}
+              />
+            ))}
           </SimpleGrid>
 
           {!modoEdicao ? (
-            <ModalUltimosAbastecimentos
-              isOpen={isOpen}
-              onClose={onClose}
-              veiculo={veiculoSelecionado?.veiculo}
-              tipo={veiculoSelecionado?.tipo}
-            />
+            <ModalUltimosAbastecimentos isOpen={isOpen} onClose={onClose} veiculo={veiculoSelecionado?.veiculo} tipo={veiculoSelecionado?.tipo} />
           ) : (
-            <ModalEditarVeiculo
-              isOpen={isOpen}
-              onClose={onClose}
-              dados={veiculoSelecionado?.veiculo}
-              tipo={veiculoSelecionado?.tipo}
-            />
+            <ModalEditarVeiculo isOpen={isOpen} onClose={onClose} dados={veiculoSelecionado?.veiculo} tipo={veiculoSelecionado?.tipo} />
           )}
         </>
       )}

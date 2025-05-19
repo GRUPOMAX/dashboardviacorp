@@ -1,6 +1,6 @@
 import {
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton,
-  ModalBody, ModalFooter, Button, Input, VStack, useToast, FormLabel, Box 
+  ModalBody, ModalFooter, Button, Input, VStack, useToast, FormLabel, Box
 } from '@chakra-ui/react';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
@@ -35,31 +35,123 @@ export default function ModalEditarVeiculo({ isOpen, onClose, dados, tipo, onAtu
     setForm(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSalvar = async () => {
-    try {
-      await axios.patch(`${BASE_URL}/m1sy388a4zv1kgl/records`, form, {
+  const validateForm = () => {
+    if (!form['MODEL-VEHICLE']) return 'Modelo do veículo é obrigatório.';
+    if (!form['KM-PERFORMACE'] || isNaN(form['KM-PERFORMACE'])) return 'KM por litro deve ser um número válido.';
+    if (!form['LITROS-MAXIMO'] || isNaN(form['LITROS-MAXIMO'])) return 'Capacidade máxima deve ser um número válido.';
+    if (!form['ABASTECIMENTO-DISPONIVELE-LITRO'] || isNaN(form['ABASTECIMENTO-DISPONIVELE-LITRO'])) return 'Combustível disponível deve ser um número válido.';
+    return null;
+  };
+
+const handleSalvar = async () => {
+  try {
+    console.log('🔧 Tipo do veículo:', tipo);
+    console.log('📦 Formulário:', form);
+
+    // Validação dos campos
+    const error = validateForm();
+    if (error) throw new Error(error);
+
+    if (tipo === 'usuario') {
+      if (!form.Id) throw new Error('ID do veículo não encontrado.');
+
+      console.log('🔄 Enviando PATCH para veículo do usuário...');
+      const payload = {
+        Id: form.Id, // Inclui o ID no payload
+        'MODEL-VEHICLE': form['MODEL-VEHICLE'],
+        'KM-PERFORMACE': Number(form['KM-PERFORMACE']),
+        'LITROS-MAXIMO': Number(form['LITROS-MAXIMO']),
+        'ABASTECIMENTO-DISPONIVELE-LITRO': Number(form['ABASTECIMENTO-DISPONIVELE-LITRO'])
+      };
+      const response = await axios.patch(`${BASE_URL}/m1sy388a4zv1kgl/records`, payload, {
+        headers: { 'xc-token': TOKEN }
+      });
+      console.log('✅ PATCH usuário OK:', response.data);
+
+    } else if (tipo === 'empresa') {
+      console.log('🔍 Buscando veículos da empresa...');
+      const { data } = await axios.get(`${BASE_URL}/mz92fb5ps4z32br/records`, {
         headers: { 'xc-token': TOKEN }
       });
 
-      toast({
-        title: 'Veículo atualizado com sucesso!',
-        status: 'success',
-        duration: 3000,
-        isClosable: true
+      const empresa = data.list.find(item => {
+        let lista;
+        try {
+          lista = typeof item['Vehicle-Standard'] === 'string'
+            ? JSON.parse(item['Vehicle-Standard'])
+            : item['Vehicle-Standard'];
+        } catch (e) {
+          console.error('❌ Erro ao parsear Vehicle-Standard:', e);
+          return false;
+        }
+        return Array.isArray(lista) && lista.some(v => v.veiculo === form['MODEL-VEHICLE']);
       });
 
-      onClose();
-      onAtualizado?.();
-    } catch (err) {
-      console.error(err);
-      toast({
-        title: 'Erro ao atualizar veículo',
-        status: 'error',
-        duration: 4000,
-        isClosable: true
+      if (!empresa) throw new Error('Veículo não encontrado em Vehicle-Standard.');
+      if (!empresa.Id) throw new Error('ID do registro da empresa não encontrado.');
+
+      let listaAtualizada;
+      try {
+        listaAtualizada = typeof empresa['Vehicle-Standard'] === 'string'
+          ? JSON.parse(empresa['Vehicle-Standard'])
+          : empresa['Vehicle-Standard'];
+      } catch (e) {
+        throw new Error('Erro ao processar lista de veículos da empresa.');
+      }
+
+      console.log('🔁 Lista original:', listaAtualizada);
+
+      listaAtualizada = listaAtualizada.map(v => {
+        if (v.veiculo === form['MODEL-VEHICLE']) {
+          console.log('✏️ Atualizando:', v);
+          return {
+            ...v,
+            veiculo: form['MODEL-VEHICLE'],
+            'KM-PERFORMACE': Number(form['KM-PERFORMACE']),
+            'LITROS-MAXIMO': Number(form['LITROS-MAXIMO']),
+            'ABASTECIMENTO-DISPONIVELE-LITRO': Number(form['ABASTECIMENTO-DISPONIVELE-LITRO'])
+          };
+        }
+        return v;
       });
+
+      console.log('✅ Lista atualizada:', listaAtualizada);
+
+      const payload = {
+        Id: empresa.Id,
+        'Vehicle-Standard': JSON.stringify(listaAtualizada)
+      };
+
+      const res = await axios.patch(`${BASE_URL}/mz92fb5ps4z32br/records`, payload, {
+        headers: { 'xc-token': TOKEN }
+      });
+
+      console.log('🛰️ PATCH empresa enviado:', res.data);
+    } else {
+      throw new Error('Tipo inválido: deve ser "usuario" ou "empresa".');
     }
-  };
+
+    toast({
+      title: 'Veículo atualizado com sucesso!',
+      status: 'success',
+      duration: 3000,
+      isClosable: true
+    });
+
+    onClose();
+    onAtualizado?.();
+
+  } catch (err) {
+    console.error('❌ ERRO AO SALVAR:', err);
+    toast({
+      title: 'Erro ao atualizar veículo',
+      description: err.message || 'Ocorreu um erro desconhecido. Verifique os dados e tente novamente.',
+      status: 'error',
+      duration: 4000,
+      isClosable: true
+    });
+  }
+};
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} isCentered>
@@ -85,6 +177,7 @@ export default function ModalEditarVeiculo({ isOpen, onClose, dados, tipo, onAtu
                 name="KM-PERFORMACE"
                 value={form['KM-PERFORMACE']}
                 onChange={handleChange}
+                type="number" // Garante entrada numérica
               />
             </Box>
             <Box w="100%">
@@ -94,6 +187,7 @@ export default function ModalEditarVeiculo({ isOpen, onClose, dados, tipo, onAtu
                 name="LITROS-MAXIMO"
                 value={form['LITROS-MAXIMO']}
                 onChange={handleChange}
+                type="number"
               />
             </Box>
             <Box w="100%">
@@ -103,12 +197,21 @@ export default function ModalEditarVeiculo({ isOpen, onClose, dados, tipo, onAtu
                 name="ABASTECIMENTO-DISPONIVELE-LITRO"
                 value={form['ABASTECIMENTO-DISPONIVELE-LITRO']}
                 onChange={handleChange}
+                type="number"
               />
             </Box>
           </VStack>
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="green" onClick={handleSalvar}>Salvar</Button>
+          <Button
+            colorScheme="green"
+            onClick={() => {
+              console.log('✅ Botão Salvar clicado');
+              handleSalvar();
+            }}
+          >
+            Salvar
+          </Button>
         </ModalFooter>
       </ModalContent>
     </Modal>

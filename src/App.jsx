@@ -5,10 +5,10 @@ import Layout from './components/Layout';
 import Usuarios from './pages/Usuarios';
 import RegistrosKm from './pages/RegistrosKm';
 import PainelAbastecimento from './pages/PainelAbastecimento';
+import ListaAbastecimentos from './components/ListaAbastecimentos'; // import já está ok
 
 const isAuthenticated = () => !!localStorage.getItem('token');
 
-// Componente de rota protegida
 function PrivateRoute({ children }) {
   return isAuthenticated() ? children : <Navigate to="/" />;
 }
@@ -50,6 +50,14 @@ function App() {
           element={
             <PrivateRoute>
               <PainelAbastecimento />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/lista-abastecimentos"
+          element={
+            <PrivateRoute>
+              <ListaAbastecimentos />
             </PrivateRoute>
           }
         />
