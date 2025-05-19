@@ -91,8 +91,9 @@ export default function PainelAbastecimento() {
       border="1px solid"
       borderColor="gray.200"
       transition="all 0.2s"
+      w="100%"
     >
-      <HStack spacing={4} align="start">
+      <HStack spacing={4} align="start" flexWrap="wrap">
         <Box
           bg="blue.100"
           w="42px"
@@ -101,13 +102,23 @@ export default function PainelAbastecimento() {
           alignItems="center"
           justifyContent="center"
           borderRadius="full"
+          flexShrink={0}
         >
           <Icon as={FiDroplet} color="blue.600" boxSize={5} />
         </Box>
-        <VStack align="start" spacing={0} flex={1} onClick={onClick} cursor="pointer">
+
+        <VStack
+          align="start"
+          spacing={0}
+          flex={1}
+          onClick={onClick}
+          cursor="pointer"
+          wordBreak="break-word"
+        >
           <Text fontWeight="semibold" fontSize="md">{nome}</Text>
           {renderTanque(Number(litros), Number(maxLitros || 60))}
         </VStack>
+
         <IconButton
           size="sm"
           icon={<FiEdit />}
@@ -119,6 +130,7 @@ export default function PainelAbastecimento() {
       </HStack>
     </Box>
   );
+
 
   return (
     <Box>
@@ -144,7 +156,7 @@ export default function PainelAbastecimento() {
 
           <Divider my={6} />
           <Heading size="md" mb={4}>Veículos do Usuário</Heading>
-          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={10}>
+          <SimpleGrid columns={{ base: 1, sm: 1, md: 2 }} spacing={4} mb={10}>
             {veiculosUsuario.map((v, i) => (
               <CardVeiculo
                 key={i}
@@ -159,7 +171,7 @@ export default function PainelAbastecimento() {
 
           <Divider my={6} />
           <Heading size="md" mb={4}>Veículos da Empresa</Heading>
-          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+          <SimpleGrid columns={{ base: 1, sm: 1, md: 2 }} spacing={4}>
             {veiculosEmpresa.flatMap((v, idx) => {
               let lista = v['Vehicle-Standard'];
               if (typeof lista === 'string') {

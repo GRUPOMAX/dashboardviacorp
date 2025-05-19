@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   Box, Heading, Table, Thead, Tbody, Tr, Th, Td, Spinner, Text, IconButton, useToast,
-  Button, useDisclosure
+  Button, useDisclosure, Stack, useBreakpointValue, HStack
 } from '@chakra-ui/react';
 import { DeleteIcon, EditIcon } from '@chakra-ui/icons';
 import {
@@ -12,6 +12,7 @@ import {
 } from '../services/api';
 import ModalUsuario from '../components/ModalUsuario';
 import ModalEditarUsuario from '../components/ModalEditarUsuario';
+import BottomBar from '../components/BottomBar'; // ✅ Adicionado
 
 const BASE_URL = 'https://nocodb.nexusnerds.com.br/api/v2/tables';
 const TOKEN = import.meta.env.VITE_NOCODB_TOKEN;
@@ -23,6 +24,7 @@ export default function Usuarios() {
   const [modoEdicao, setModoEdicao] = useState(false);
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const isMobile = useBreakpointValue({ base: true, md: false }); // ✅ Detecta mobile
 
   const carregar = async () => {
     try {
@@ -124,7 +126,7 @@ export default function Usuarios() {
   };
 
   return (
-    <Box>
+    <Box pb={isMobile ? 16 : 0}>
       <Heading size="lg" mb={4}>Usuários</Heading>
       <Button colorScheme="blue" mb={4} onClick={() => { setUsuarioEditando(null); setModoEdicao(false); onOpen(); }}>
         Novo Usuário
@@ -135,48 +137,83 @@ export default function Usuarios() {
       ) : usuarios.length === 0 ? (
         <Text>Nenhum usuário encontrado.</Text>
       ) : (
-        <Table variant="striped" size="sm">
-          <Thead>
-            <Tr>
-              <Th>Nome</Th>
-              <Th>Email</Th>
-              <Th>Veículo</Th>
-              <Th>Empresa</Th>
-              <Th>Ações</Th>
-            </Tr>
-          </Thead>
-          <Tbody>
-            {usuarios.map((user) => (
-              <Tr key={user.Id}>
-                <Td>{user.first_nome} {user.last_nome}</Td>
-                <Td>{user.email}</Td>
-                <Td>{user.vehicle}</Td>
-                <Td>{user.Enterprise}</Td>
-                <Td>
-                  <IconButton
-                    size="sm"
-                    colorScheme="blue"
-                    icon={<EditIcon />}
-                    mr={2}
-                    onClick={() => {
-                      setUsuarioEditando(user);
-                      setModoEdicao(true);
-                      onOpen();
-                    }}
-                    aria-label="Editar"
-                  />
-                  <IconButton
-                    size="sm"
-                    colorScheme="red"
-                    icon={<DeleteIcon />}
-                    onClick={() => removerUsuario(user.Id)}
-                    aria-label="Deletar"
-                  />
-                </Td>
-              </Tr>
-            ))}
-          </Tbody>
-        </Table>
+        <>
+          {!isMobile ? (
+            <Table variant="striped" size="sm">
+              <Thead>
+                <Tr>
+                  <Th>Nome</Th>
+                  <Th>Email</Th>
+                  <Th>Veículo</Th>
+                  <Th>Empresa</Th>
+                  <Th>Ações</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
+                {usuarios.map((user) => (
+                  <Tr key={user.Id}>
+                    <Td>{user.first_nome} {user.last_nome}</Td>
+                    <Td>{user.email}</Td>
+                    <Td>{user.vehicle}</Td>
+                    <Td>{user.Enterprise}</Td>
+                    <Td>
+                      <IconButton
+                        size="sm"
+                        colorScheme="blue"
+                        icon={<EditIcon />}
+                        mr={2}
+                        onClick={() => {
+                          setUsuarioEditando(user);
+                          setModoEdicao(true);
+                          onOpen();
+                        }}
+                        aria-label="Editar"
+                      />
+                      <IconButton
+                        size="sm"
+                        colorScheme="red"
+                        icon={<DeleteIcon />}
+                        onClick={() => removerUsuario(user.Id)}
+                        aria-label="Deletar"
+                      />
+                    </Td>
+                  </Tr>
+                ))}
+              </Tbody>
+            </Table>
+          ) : (
+            <Stack spacing={4}>
+              {usuarios.map((user) => (
+                <Box key={user.Id} p={4} borderWidth="1px" borderRadius="lg" shadow="sm">
+                  <Text fontWeight="bold">{user.first_nome} {user.last_nome}</Text>
+                  <Text>Email: {user.email}</Text>
+                  <Text>Veículo: {user.vehicle}</Text>
+                  <Text>Empresa: {user.Enterprise}</Text>
+                  <HStack mt={2}>
+                    <IconButton
+                      size="sm"
+                      colorScheme="blue"
+                      icon={<EditIcon />}
+                      onClick={() => {
+                        setUsuarioEditando(user);
+                        setModoEdicao(true);
+                        onOpen();
+                      }}
+                      aria-label="Editar"
+                    />
+                    <IconButton
+                      size="sm"
+                      colorScheme="red"
+                      icon={<DeleteIcon />}
+                      onClick={() => removerUsuario(user.Id)}
+                      aria-label="Deletar"
+                    />
+                  </HStack>
+                </Box>
+              ))}
+            </Stack>
+          )}
+        </>
       )}
 
       {!modoEdicao ? (
@@ -194,6 +231,8 @@ export default function Usuarios() {
           onAtualizado={carregar}
         />
       )}
+
+      {isMobile && <BottomBar />} {/* ✅ Renderiza a barra apenas em mobile */}
     </Box>
   );
 }
