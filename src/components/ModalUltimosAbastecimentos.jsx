@@ -18,6 +18,17 @@ export default function ModalUltimosAbastecimentos({ isOpen, onClose, veiculo, t
       try {
         let resultado = [];
 
+        const headers = { 'xc-token': NOCODB_TOKEN };
+
+        // 🔄 Mapeia CPF → Nome do usuário
+        const resUsuarios = await fetch(`https://nocodb.nexusnerds.com.br/api/v2/tables/msehqhsr7j040uq/records?limit=1000`, { headers });
+        const listaUsuarios = await resUsuarios.json();
+        const mapaUsuarios = {};
+        listaUsuarios.list.forEach(u => {
+          const nome = `${u.first_nome ?? ''} ${u.last_nome ?? ''}`.trim();
+          mapaUsuarios[u['UnicID-CPF']] = nome || 'Usuário';
+        });
+
         // 1. Abastecimentos do tipo usuário
         if (tipo === 'usuario') {
           const dados = await listarRegistrosKm();
@@ -33,7 +44,7 @@ export default function ModalUltimosAbastecimentos({ isOpen, onClose, veiculo, t
 
                 resultado.push({
                   Data: dayjs(data).format('DD/MM/YYYY'),
-                  'Usuário': user['UnicID-CPF'],
+                  'Usuário': mapaUsuarios[user['UnicID-CPF']] || 'Desconhecido',
                   Valor: info.VALOR_ABASTECIMENTO,
                   Litros: info.LITROS_ABASTECIDOS,
                   'Restante Após': info.LITROS_RESTANTES_APOS ?? '-'
@@ -43,9 +54,7 @@ export default function ModalUltimosAbastecimentos({ isOpen, onClose, veiculo, t
           });
 
           // ➕ Inclui registros do campo ABASTECIMENTO-ZERADO (tabela DATA - [VEHICLE])
-          const resZerado = await fetch(`https://nocodb.nexusnerds.com.br/api/v2/tables/m1sy388a4zv1kgl/records`, {
-            headers: { 'xc-token': NOCODB_TOKEN }
-          });
+          const resZerado = await fetch(`https://nocodb.nexusnerds.com.br/api/v2/tables/m1sy388a4zv1kgl/records`, { headers });
           const dadosZerado = await resZerado.json();
           dadosZerado.list.forEach(entry => {
             if (entry['MODEL-VEHICLE']?.toLowerCase() !== veiculo?.toLowerCase()) return;
@@ -54,7 +63,7 @@ export default function ModalUltimosAbastecimentos({ isOpen, onClose, veiculo, t
             lista.forEach(item => {
               resultado.push({
                 Data: dayjs(item.data).format('DD/MM/YYYY'),
-                'Usuário': entry['UnicID-CPF'],
+                'Usuário': mapaUsuarios[entry['UnicID-CPF']] || 'Desconhecido',
                 Valor: item.valor,
                 Litros: item.litros,
                 'Restante Após': entry['ABASTECIMENTO-DISPONIVELE-LITRO'] ?? '-'
@@ -74,7 +83,7 @@ export default function ModalUltimosAbastecimentos({ isOpen, onClose, veiculo, t
 
               resultado.push({
                 Data: dayjs(comp.data).format('DD/MM/YYYY'),
-                'Usuário': entry.Enterprise,
+                'Usuário': comp.responsavel || entry.Enterprise || 'Empresa',
                 Valor: comp.valor ?? '-',
                 Litros: comp.litros,
                 'Restante Após': '-'
@@ -95,6 +104,7 @@ export default function ModalUltimosAbastecimentos({ isOpen, onClose, veiculo, t
 
     if (isOpen && veiculo) buscarAbastecimentos();
   }, [isOpen, veiculo, tipo]);
+
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="lg">
