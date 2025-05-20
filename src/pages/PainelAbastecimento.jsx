@@ -151,7 +151,7 @@ export default function PainelAbastecimento() {
           )}
 
           <Divider my={6} />
-          <Heading size="md" mb={4}>Veículos do Usuário</Heading>
+          <Heading size="md" mb={4}>Veículos Agregados</Heading>
           <SimpleGrid columns={{ base: 1, sm: 1, md: 2 }} spacing={4} mb={10}>
             {litrosVeiculosUsuarioNoPeriodo.map((v, i) => (
               <CardVeiculo
