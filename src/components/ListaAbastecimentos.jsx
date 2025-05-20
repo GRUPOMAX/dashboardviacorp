@@ -75,7 +75,7 @@ export default function ListaAbastecimentos() {
           (empresa.comprovante || []).map(item => ({
             ...item,
             data: item.data,
-            usuario: empresa['Enterprise'] || 'Empresa',
+            usuario: item.responsavel || empresa['Enterprise'] || 'Empresa',
             origem: 'Veículo Empresa'
           }))
         );

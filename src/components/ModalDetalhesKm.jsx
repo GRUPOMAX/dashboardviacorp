@@ -12,17 +12,23 @@ import { useState } from 'react';
 export default function ModalDetalhesKm({ isOpen, onClose, dados, data, abastecimentoZerado = [], cpfUsuario }) {
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [mostrarImagensKm, setMostrarImagensKm] = useState(false); // ✅ Adicione isto
+  
 
   if (!dados || !dados['KM-Control']) {
     //console.log('Dados ou KM-Control ausentes:', { dados });
     return null;
   }
   const km = dados['KM-Control'];
+  const urlImagemKmInicial = km['URL_IMG-KM-INICIAL'];
+  const urlImagemKmFinal = km['URL_IMG-KM-FINAL'];
 
   const comprovantesKm = [
     km['URL_IMG-KM-COMPROVANTE_ABASTECIMENTO_1'],
     km['URL_IMG-KM-COMPROVANTE_ABASTECIMENTO_2']
   ].filter(url => url && typeof url === 'string');
+
+
 
   // Formatar a data com validação
   const dataFormatada = dayjs(data, 'DD/MM/YYYY').isValid()
@@ -84,21 +90,72 @@ export default function ModalDetalhesKm({ isOpen, onClose, dados, data, abasteci
           <ModalBody pt={4}>
             <VStack align="start" spacing={4}>
               {/* Veículo e KM */}
-              <Box w="100%">
-                <HStack justify="space-between">
-                  <Text><strong>Veículo:</strong> {km.VEICULO}</Text>
-                  <Badge colorScheme="blue">{km.UNIDADE?.toUpperCase()}</Badge>
-                </HStack>
-                <Text fontSize="sm">
-                  <strong>KM Inicial:</strong> {km['KM-INICIAL']} km às {km['HORA_KM-INICIAL']}
-                </Text>
-                <Text fontSize="sm">
-                  <strong>KM Final:</strong> {km['KM-FINAL']} km às {km['HORA_KM-FINAL']}
-                </Text>
-                <Text fontSize="sm">
-                  <strong>Total Rodado:</strong> {km['TOTAL-KM_RODADO']} {km.UNIDADE}
-                </Text>
-              </Box>
+<Box w="100%">
+  <HStack justify="space-between">
+    <Text><strong>Veículo:</strong> {km.VEICULO}</Text>
+    <Badge colorScheme="blue">{km.UNIDADE?.toUpperCase()}</Badge>
+  </HStack>
+  <Text fontSize="sm">
+    <strong>KM Inicial:</strong> {km['KM-INICIAL']} km às {km['HORA_KM-INICIAL']}
+  </Text>
+  <Text fontSize="sm">
+    <strong>KM Final:</strong> {km['KM-FINAL']} km às {km['HORA_KM-FINAL']}
+  </Text>
+  <Text fontSize="sm">
+    <strong>Total Rodado:</strong> {km['TOTAL-KM_RODADO']} {km.UNIDADE}
+  </Text>
+
+  <Button
+    mt={2}
+    size="sm"
+    colorScheme="gray"
+    variant="outline"
+    onClick={() => setMostrarImagensKm(!mostrarImagensKm)}
+  >
+    {mostrarImagensKm ? 'Ocultar Imagens do KM' : 'Visualizar KM (Inicial e Final)'}
+  </Button>
+
+  {mostrarImagensKm && (
+    <HStack spacing={4} mt={3} wrap="wrap">
+      <VStack spacing={1} align="center">
+        <Text fontSize="xs"><strong>KM Inicial</strong></Text>
+        {urlImagemKmInicial ? (
+          <Image
+            src={urlImagemKmInicial}
+            alt="KM Inicial"
+            maxW="120px"
+            borderRadius="md"
+            border="1px solid #ccc"
+            cursor="pointer"
+            onClick={() => openImageModal(urlImagemKmInicial)}
+            fallbackSrc="https://via.placeholder.com/120?text=Indisponível"
+          />
+        ) : (
+          <Text fontSize="xs" color="gray.500">Imagem não disponível</Text>
+        )}
+      </VStack>
+
+      <VStack spacing={1} align="center">
+        <Text fontSize="xs"><strong>KM Final</strong></Text>
+        {urlImagemKmFinal ? (
+          <Image
+            src={urlImagemKmFinal}
+            alt="KM Final"
+            maxW="120px"
+            borderRadius="md"
+            border="1px solid #ccc"
+            cursor="pointer"
+            onClick={() => openImageModal(urlImagemKmFinal)}
+            fallbackSrc="https://via.placeholder.com/120?text=Indisponível"
+          />
+        ) : (
+          <Text fontSize="xs" color="gray.500">Imagem não disponível</Text>
+        )}
+      </VStack>
+    </HStack>
+  )}
+</Box>
+
 
               {/* Abastecimento */}
               <Divider />
