@@ -36,6 +36,35 @@ function RecenterMap({ center }) {
   return null;
 }
 
+
+function CustomZoomControl({ isMobile }) {
+  const map = useMap();
+
+  useEffect(() => {
+    const position = isMobile ? 'bottomright' : 'topleft';
+
+    const zoom = L.control.zoom({ position });
+    zoom.addTo(map);
+
+    if (isMobile) {
+      // Aplica margem extra no mobile para não sobrepor o BottomBar
+      const zoomEl = document.querySelector('.leaflet-control-zoom');
+      if (zoomEl) {
+        zoomEl.style.marginBottom = '70px'; // ajuste conforme a altura do seu BottomBar
+        zoomEl.style.marginRight = '10px';
+      }
+    }
+
+    return () => {
+      zoom.remove();
+    };
+  }, [isMobile, map]);
+
+  return null;
+}
+
+
+
 export default function MapaTempoReal() {
   const [posicoes, setPosicoes] = useState({});
   const [historico, setHistorico] = useState({});
@@ -200,9 +229,10 @@ export default function MapaTempoReal() {
       {carregando ? (
         <Spinner size="xl" position="absolute" top="50%" left="50%" />
       ) : (
-        <MapContainer center={center} zoom={15} style={{ height: '100%', width: '100%' }}>
+        <MapContainer center={center} zoom={15} style={{ height: '100%', width: '100%' }} zoomControl={false}>
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
           <RecenterMap center={center} />
+          <CustomZoomControl isMobile={isMobile} />
 
 
         <Marker position={COORDENADA_QG} icon={qgIcon}>

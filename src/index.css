@@ -66,3 +66,13 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+/* Dentro do seu index.css ou App.css */
+@media (max-width: 768px) {
+  .leaflet-control-zoom {
+    bottom: 80px;
+    top: auto !important;
+    right: 12px !important;
+    left: auto !important;
+  }
+}

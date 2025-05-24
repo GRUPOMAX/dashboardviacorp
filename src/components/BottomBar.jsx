@@ -45,7 +45,7 @@ export default function BottomBar() {
       right="0"
       bg="white"
       borderTop="1px solid #ddd"
-      zIndex="999"
+      zIndex="2000"
       px={4}
       py={2}
       boxShadow="md"
