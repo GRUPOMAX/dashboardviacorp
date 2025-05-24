@@ -6,6 +6,9 @@ import {
 } from 'react-leaflet';
 import { Badge } from '@chakra-ui/react'; // certifique-se de importar no topo
 
+import { VStack, useBreakpointValue } from '@chakra-ui/react'; // adicione
+
+
 import { useEffect, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -41,6 +44,8 @@ export default function MapaTempoReal() {
   const [modoHistorico, setModoHistorico] = useState(false);
   const [cpfSelecionado, setCpfSelecionado] = useState('');
   const [horas, setHoras] = useState(1);
+
+  const isMobile = useBreakpointValue({ base: true, md: false });
 
   useEffect(() => {
     const buscar = async () => {
@@ -135,30 +140,53 @@ export default function MapaTempoReal() {
 
   return (
     <Box w="100%" h="100vh" position="relative">
-        <HStack
-        position="absolute" top={4} right={4} zIndex={1000}
-        bg="white" borderRadius="md" p={3} boxShadow="md" spacing={4}
-        align="center"
-        >
-
-        <Switch isChecked={modoHistorico} onChange={e => setModoHistorico(e.target.checked)} />
+    <Box
+    position="absolute"
+    top={4}
+    left={isMobile ? 4 : 'auto'}
+    right={isMobile ? 4 : 4}
+    zIndex={1000}
+    bg="white"
+    borderRadius="md"
+    p={3}
+    boxShadow="md"
+    maxW={isMobile ? 'calc(100% - 32px)' : 'unset'}
+    >
+    <VStack spacing={3} align="start">
+        <HStack>
+        <Switch
+            isChecked={modoHistorico}
+            onChange={(e) => setModoHistorico(e.target.checked)}
+        />
         <Text>{modoHistorico ? 'Exibir Histórico' : 'Tempo Real'}</Text>
+        </HStack>
 
         {modoHistorico && (
-          <>
-            <Select placeholder="Selecione um usuário" w="200px" value={cpfSelecionado} onChange={(e) => setCpfSelecionado(e.target.value)}>
-              {Object.entries(usuarios).map(([cpf, { nome }]) => (
+        <>
+            <Select
+            placeholder="Selecione um usuário"
+            w="full"
+            value={cpfSelecionado}
+            onChange={(e) => setCpfSelecionado(e.target.value)}
+            >
+            {Object.entries(usuarios).map(([cpf, { nome }]) => (
                 <option key={cpf} value={cpf}>{nome || cpf}</option>
-              ))}
+            ))}
             </Select>
-            <Select w="100px" value={horas} onChange={(e) => setHoras(Number(e.target.value))}>
-              {[1, 2, 4, 6, 12, 24].map(h => (
+            <Select
+            w="full"
+            value={horas}
+            onChange={(e) => setHoras(Number(e.target.value))}
+            >
+            {[1, 2, 4, 6, 12, 24].map(h => (
                 <option key={h} value={h}>{h}h</option>
-              ))}
+            ))}
             </Select>
-          </>
+        </>
         )}
-      </HStack>
+    </VStack>
+    </Box>
+
 
       {/* ✅ Mensagem se ninguém estiver online */}
       {!modoHistorico && usuariosOnline.length === 0 && (
