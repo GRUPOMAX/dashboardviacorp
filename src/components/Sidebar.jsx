@@ -16,7 +16,8 @@ import {
   FiChevronRight,
   FiLogOut,
   FiList, // Novo ícone para a página de abastecimentos
-  FiMapPin 
+  FiMapPin, 
+  FiInfo
 } from 'react-icons/fi';
 import { useState } from 'react';
 
@@ -34,6 +35,8 @@ export default function Sidebar() {
     { label: 'Painel de Abastecimento', path: '/painel-abastecimento', icon: FiTruck },
     { label: 'Lista de Abastecimentos', path: '/lista-abastecimentos', icon: FiList }, // Nova entrada
     { label: 'Mapa em Tempo Real', path: '/mapa-tempo-real', icon: FiMapPin },
+    { label: 'Sobre', path: '/sobre', icon: FiInfo  }
+
 
   ];
 

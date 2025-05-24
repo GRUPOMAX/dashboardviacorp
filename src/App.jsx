@@ -7,6 +7,7 @@ import RegistrosKm from './pages/RegistrosKm';
 import PainelAbastecimento from './pages/PainelAbastecimento';
 import ListaAbastecimentos from './components/ListaAbastecimentos'; // import já está ok
 import MapaTempoReal from './pages/MapaTempoReal';
+import Sobre from './pages/Sobre';
 
 const isAuthenticated = () => !!localStorage.getItem('token');
 
@@ -67,6 +68,14 @@ function App() {
           element={
             <PrivateRoute>
               <MapaTempoReal />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/sobre"
+          element={
+            <PrivateRoute>
+              <Sobre />
             </PrivateRoute>
           }
         />

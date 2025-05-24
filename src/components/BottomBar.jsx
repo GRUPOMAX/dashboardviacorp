@@ -11,7 +11,8 @@ import {
   FiTruck,
   FiLogOut,
   FiList,
-  FiMapPin
+  FiMapPin, 
+  FiInfo
 } from 'react-icons/fi';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -25,7 +26,8 @@ export default function BottomBar() {
     { icon: FiMap, path: '/registros-km', label: 'KM' },
     { icon: FiTruck, path: '/painel-abastecimento', label: 'Abastecimento' },
     { icon: FiList, path: '/lista-abastecimentos', label: 'Lista Abastecimento' },
-    { icon: FiMapPin, path: '/mapa-tempo-real', label: 'Mapa em Tempo Real' }
+    { icon: FiMapPin, path: '/mapa-tempo-real', label: 'Mapa em Tempo Real' },
+    { label: 'Sobre', path: '/sobre', icon: FiInfo  }
   ];
 
   const handleClick = (path) => {
