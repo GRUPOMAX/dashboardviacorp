@@ -1,9 +1,17 @@
-import { Box, IconButton, HStack, useColorModeValue, Tooltip } from '@chakra-ui/react';
+import {
+  Box,
+  IconButton,
+  HStack,
+  useColorModeValue,
+  Tooltip
+} from '@chakra-ui/react';
 import {
   FiUsers,
   FiMap,
   FiTruck,
-  FiLogOut
+  FiLogOut,
+  FiList,
+  FiMapPin
 } from 'react-icons/fi';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -16,7 +24,8 @@ export default function BottomBar() {
     { icon: FiUsers, path: '/usuarios', label: 'Usuários' },
     { icon: FiMap, path: '/registros-km', label: 'KM' },
     { icon: FiTruck, path: '/painel-abastecimento', label: 'Abastecimento' },
-    { icon: FiLogOut, path: '/logout', label: 'Sair' }
+    { icon: FiList, path: '/lista-abastecimentos', label: 'Lista Abastecimento' },
+    { icon: FiMapPin, path: '/mapa-tempo-real', label: 'Mapa em Tempo Real' }
   ];
 
   const handleClick = (path) => {
@@ -44,7 +53,6 @@ export default function BottomBar() {
       <HStack justify="space-around">
         {menu.map(({ icon, path, label }) => {
           const isActive = location.pathname === path;
-
           return (
             <Tooltip label={label} key={path}>
               <IconButton
@@ -58,6 +66,17 @@ export default function BottomBar() {
             </Tooltip>
           );
         })}
+
+        <Tooltip label="Sair">
+          <IconButton
+            icon={<FiLogOut />}
+            aria-label="Sair"
+            variant="ghost"
+            color={'red.500'}
+            onClick={() => handleClick('/logout')}
+            fontSize="20px"
+          />
+        </Tooltip>
       </HStack>
     </Box>
   );

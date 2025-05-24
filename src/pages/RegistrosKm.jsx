@@ -167,7 +167,12 @@ export default function RegistrosKm() {
                   const control = registro['KM-CONTROL-SEMANAL'] || {};
                   return Object.entries(control).flatMap(([data, lista]) =>
                     lista
-                      .filter(() => !filtroData || dayjs(data).isSame(dayjs(filtroData), 'day'))
+                      .filter(() => {
+                          const dataRegistro = dayjs(data);
+                          const dentroDoFiltroData = !filtroData || dataRegistro.isSame(dayjs(filtroData), 'day');
+                          const dentroDos7Dias = dataRegistro.isAfter(dayjs().subtract(7, 'day').startOf('day'));
+                          return dentroDoFiltroData && dentroDos7Dias;
+                          })
                       .map((item, i) => {
                         const km = item['KM-Control'];
                         return (
