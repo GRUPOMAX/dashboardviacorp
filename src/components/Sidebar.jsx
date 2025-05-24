@@ -15,7 +15,8 @@ import {
   FiChevronLeft,
   FiChevronRight,
   FiLogOut,
-  FiList // Novo ícone para a página de abastecimentos
+  FiList, // Novo ícone para a página de abastecimentos
+  FiMapPin 
 } from 'react-icons/fi';
 import { useState } from 'react';
 
@@ -31,7 +32,9 @@ export default function Sidebar() {
     { label: 'Usuários', path: '/usuarios', icon: FiUsers },
     { label: 'Registros de KM', path: '/registros-km', icon: FiMap },
     { label: 'Painel de Abastecimento', path: '/painel-abastecimento', icon: FiTruck },
-    { label: 'Lista de Abastecimentos', path: '/lista-abastecimentos', icon: FiList } // Nova entrada
+    { label: 'Lista de Abastecimentos', path: '/lista-abastecimentos', icon: FiList }, // Nova entrada
+    { label: 'Mapa em Tempo Real', path: '/mapa-tempo-real', icon: FiMapPin },
+
   ];
 
   const handleLogout = () => {
