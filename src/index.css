@@ -76,3 +76,23 @@ button:focus-visible {
     left: auto !important;
   }
 }
+
+/* Remove completamente a caixa branca padrão do Leaflet */
+.leaflet-popup-content-wrapper {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+/* Remove o balão/seta */
+.leaflet-popup-tip-container,
+.leaflet-popup-tip {
+  display: none !important;
+}
+
+/* Remove padding interno que empurra seu conteúdo */
+.leaflet-popup-content {
+  margin: 0 !important;
+  padding: 0 !important;
+}

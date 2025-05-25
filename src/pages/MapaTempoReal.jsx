@@ -245,42 +245,70 @@ export default function MapaTempoReal() {
           {/* ✅ Tempo real: apenas online */}
           {!modoHistorico && usuariosOnline.map(([cpf, { latitude, longitude, timestamp }]) => (
             <Marker key={cpf} position={[latitude, longitude]} icon={getCustomIcon(cpf, true)}>
-              <Popup>
-                <Text><strong>Nome:</strong> {usuarios[cpf]?.nome || 'Desconhecido'}</Text>
-                <Text><strong>CPF:</strong> {cpf}</Text>
-                {(() => {
-                    const diffSeg = dayjs().diff(dayjs(timestamp), 'second');
-                    const estaOnline = diffSeg <= 5;
+<Popup>
+  <Box
+    p={2}
+    bg="white"
+    borderRadius="md"
+    color="black"
+    fontSize="xs"
+    minW="180px"
+    fontFamily="Inter, sans-serif"
+    lineHeight="1.3"
+  >
+    <Text fontWeight="bold" fontSize="sm" color="gray.800" mb={1}>
+      {usuarios[cpf]?.nome || 'Desconhecido'}
+    </Text>
 
-                    return (
-                        <HStack mt={2} mb={2}>
-                        <Text><strong>Status:</strong></Text>
-                        <Badge
-                            colorScheme={estaOnline ? 'green' : 'gray'}
-                            variant="solid"
-                            borderRadius="full"
-                            px={2}
-                            py={0.5}
-                            fontSize="0.75rem"
-                        >
-                            {estaOnline ? 'Online' : 'Offline'}
-                        </Badge>
-                        </HStack>
-                    );
-                    })()}
+    <Text fontSize="xs" color="gray.600">
+      CPF: <Text as="span" fontWeight="medium" color="gray.800">{cpf}</Text>
+    </Text>
 
-                <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{ color: '#3182ce', textDecoration: 'underline' }}
-                >
-                  Ver no Google Maps
-                </a>
-                <Text fontSize="sm" mt={1}>
-                  Última atualização: {new Date(timestamp).toLocaleString('pt-BR')}
-                </Text>
-              </Popup>
+    <HStack spacing={1} mt={-4}>
+      <Text color="gray.600">Status:</Text>
+      <Badge
+        bg={dayjs().diff(dayjs(timestamp), 'second') <= 5 ? 'green.400' : 'gray.500'}
+        color="white"
+        px={3}
+        py={0}
+        borderRadius="full"
+        fontSize="0.6rem"
+        fontWeight="bold"
+      >
+        {dayjs().diff(dayjs(timestamp), 'second') <= 5 ? 'ONLINE' : 'OFFLINE'}
+      </Badge>
+    </HStack>
+
+    <a
+      href={`https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`}
+      target="_blank"
+      rel="noreferrer"
+      style={{
+        color: '#2E9606',
+        fontSize: '0.7rem',
+        fontWeight: '500',
+        display: 'inline-block',
+        marginTop: '6px'
+      }}
+    >
+      📍 Google Maps
+    </a>
+
+    <Text mt={1} fontSize="0.65rem" color="gray.500">
+      Última verificação:{' '}
+      <Text as="span" fontWeight="medium" color="gray.700">
+        {new Date(timestamp).toLocaleTimeString('pt-BR', {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        })}
+      </Text>
+    </Text>
+
+  </Box>
+</Popup>
+
+
             </Marker>
           ))}
 
