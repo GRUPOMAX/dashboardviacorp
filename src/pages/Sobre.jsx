@@ -36,7 +36,7 @@ export default function Sobre() {
             📱 Baixe o aplicativo Android 
           </Heading>
           <Text mb={4}>Baixe o Service de Rastreio em tempo Real:</Text>
-          <Link href="https://nextcloud.nexusnerds.com.br/s/H8nsNeeoHaAYeia/download/viacorp-service.apk" isExternal>
+          <Link href="https://nextcloud.nexusnerds.com.br/s/fWKLGPCrfFioaeM/download/ViaCorPService%202.0.apk" isExternal>
             <Button leftIcon={<FiDownload />} colorScheme="teal">
               Download Service (.apk)
             </Button>
