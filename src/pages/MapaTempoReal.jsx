@@ -1,10 +1,15 @@
+
 import {
-  Box, Spinner, Text, HStack, Switch, Select
+  Box, Spinner, Text, HStack, Switch, Select, IconButton
 } from '@chakra-ui/react';
 import {
   MapContainer, TileLayer, Marker, Popup, Polyline, useMap
 } from 'react-leaflet';
 import { Badge } from '@chakra-ui/react'; // certifique-se de importar no topo
+
+import { Wifi, Signal, BatteryFull, Smartphone, MapPin, Network, RadioTower, PhoneCall, Info } from 'lucide-react';
+
+
 
 import { VStack, useBreakpointValue } from '@chakra-ui/react'; // adicione
 
@@ -18,6 +23,39 @@ const NOCODB_URL = import.meta.env.VITE_NOCODB_URL;
 const NOCODB_TOKEN = import.meta.env.VITE_NOCODB_TOKEN;
 const INTERVALO_ONLINE_SEGUNDOS = 60;
 const COORDENADA_QG = [-20.360886959602578, -40.41844432562764]; // QG
+
+
+
+
+const getOperadoraIcon = (nome) => {
+  const lower = nome?.toLowerCase();
+  if (!lower) return <RadioTower size={14} />;
+  if (lower.includes('vivo')) return <RadioTower size={14} color="#5B2DC4" />;
+  if (lower.includes('claro')) return <RadioTower size={14} color="#E30613" />;
+  if (lower.includes('tim')) return <RadioTower size={14} color="#0066B3" />;
+  if (lower.includes('oi')) return <PhoneCall size={14} color="#FFD700" />;
+  return <Network size={14} />;
+};
+
+const getRedeIcon = (tipo) => {
+  const lower = tipo?.toLowerCase();
+  if (!lower) return <Network size={14} />;
+  if (lower.includes('wi-fi') || lower.includes('wifi')) return <Wifi size={14} color="#3182ce" />;
+  if (lower.includes('dados')) return <RadioTower size={14} color="#38A169" />;
+  return <Network size={14} />;
+};
+
+
+const getSinalIcon = (nivel) => {
+  const cor = nivel >= 3 ? '#38A169' : nivel === 2 ? '#ECC94B' : '#E53E3E';
+  return <Signal size={14} color={cor} />;
+};
+
+const getBateriaIcon = (nivel) => {
+  const cor = nivel >= 80 ? '#38A169' : nivel >= 50 ? '#ECC94B' : '#E53E3E';
+  return <BatteryFull size={14} color={cor} />;
+};
+
 
 
 const qgIcon = new L.Icon({
@@ -72,6 +110,8 @@ export default function MapaTempoReal() {
   const [carregando, setCarregando] = useState(true);
   const [modoHistorico, setModoHistorico] = useState(false);
   const [cpfSelecionado, setCpfSelecionado] = useState('');
+  const [expandido, setExpandido] = useState(false);
+
   const [horas, setHoras] = useState(1);
 
   const isMobile = useBreakpointValue({ base: true, md: false });
@@ -96,10 +136,11 @@ export default function MapaTempoReal() {
         const mapaUsuarios = {};
         usuariosData.list.forEach(user => {
           mapaUsuarios[user['UnicID-CPF']] = {
-            nome: `${user.first_nome ?? ''} ${user.last_nome ?? ''}`,
-            foto: user['picture-url']
+            nome: `${user.first_nome ?? ''} ${user.last_nome ?? ''}`.trim(),
+            foto: user['picture-url'] || user['picture_url'] || ''
           };
         });
+
 
         setPosicoes(tempoReal);
         setHistorico(historicoCompleto);
@@ -245,68 +286,73 @@ export default function MapaTempoReal() {
           {/* ✅ Tempo real: apenas online */}
           {!modoHistorico && usuariosOnline.map(([cpf, { latitude, longitude, timestamp }]) => (
             <Marker key={cpf} position={[latitude, longitude]} icon={getCustomIcon(cpf, true)}>
-<Popup>
-  <Box
-    p={2}
-    bg="white"
-    borderRadius="md"
-    color="black"
-    fontSize="xs"
-    minW="180px"
-    fontFamily="Inter, sans-serif"
-    lineHeight="1.3"
-  >
-    <Text fontWeight="bold" fontSize="sm" color="gray.800" mb={1}>
-      {usuarios[cpf]?.nome || 'Desconhecido'}
-    </Text>
+              <Popup>
+                <Box p={1.5} bg="white" borderRadius="md" minW="200px" fontSize="xs" lineHeight="1.2">
+                  <HStack justify="space-between" mb={1}>
+                    <Text fontWeight="bold" fontSize="sm" color="gray.800">
+                      {usuarios[cpf]?.nome || 'Desconhecido'}
+                    </Text>
+                    <IconButton
+                      icon={<Info size={14} />}
+                      size="xs"
+                      variant="ghost"
+                      onClick={() => setExpandido(!expandido)}
+                      aria-label="Ver mais"
+                    />
+                  </HStack>
 
-    <Text fontSize="xs" color="gray.600">
-      CPF: <Text as="span" fontWeight="medium" color="gray.800">{cpf}</Text>
-    </Text>
+                  <VStack spacing={0.5} align="start">
+                    <HStack spacing={1}><Smartphone size={12} /><Text>CPF: {cpf}</Text></HStack>
+                    <HStack spacing={1}><MapPin size={12} /><Text>Verificação: {new Date(timestamp).toLocaleTimeString('pt-BR')}</Text></HStack>
 
-    <HStack spacing={1} mt={-4}>
-      <Text color="gray.600">Status:</Text>
-      <Badge
-        bg={dayjs().diff(dayjs(timestamp), 'second') <= 5 ? 'green.400' : 'gray.500'}
-        color="white"
-        px={3}
-        py={0}
-        borderRadius="full"
-        fontSize="0.6rem"
-        fontWeight="bold"
-      >
-        {dayjs().diff(dayjs(timestamp), 'second') <= 5 ? 'ONLINE' : 'OFFLINE'}
-      </Badge>
-    </HStack>
+                    <HStack spacing={1}>
+                      {getRedeIcon(posicoes[cpf]?.rede)}
+                      <Text>{posicoes[cpf]?.rede || '-'}</Text>
+                    </HStack>
 
-    <a
-      href={`https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`}
-      target="_blank"
-      rel="noreferrer"
-      style={{
-        color: '#2E9606',
-        fontSize: '0.7rem',
-        fontWeight: '500',
-        display: 'inline-block',
-        marginTop: '6px'
-      }}
-    >
-      📍 Google Maps
-    </a>
+                    {expandido && (
+                      <>
+                        <HStack spacing={1}>
+                          <Smartphone size={12} />
+                          <Text>{posicoes[cpf]?.dispositivo || '-'}</Text>
+                        </HStack>
 
-    <Text mt={1} fontSize="0.65rem" color="gray.500">
-      Última verificação:{' '}
-      <Text as="span" fontWeight="medium" color="gray.700">
-        {new Date(timestamp).toLocaleTimeString('pt-BR', {
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit'
-        })}
-      </Text>
-    </Text>
+                        <HStack spacing={1}>
+                          {getOperadoraIcon(posicoes[cpf]?.operadora)}
+                          <Text>{posicoes[cpf]?.operadora || '-'}</Text>
+                        </HStack>
 
-  </Box>
-</Popup>
+                        <HStack spacing={1}>
+                          {getSinalIcon(posicoes[cpf]?.sinal)}
+                          <Text>Sinal: {posicoes[cpf]?.sinal} / 4</Text>
+                        </HStack>
+
+                        <HStack spacing={1}>
+                          {getBateriaIcon(posicoes[cpf]?.bateria)}
+                          <Text>Bateria: {posicoes[cpf]?.bateria}%</Text>
+                        </HStack>
+                      </>
+                    )}
+                  </VStack>
+
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      color: '#2E9606',
+                      fontSize: '0.7rem',
+                      fontWeight: '500',
+                      display: 'inline-block',
+                      marginTop: '6px'
+                    }}
+                  >
+                    📍 Ver no Google Maps
+                  </a>
+                </Box>
+              </Popup>
+
+
 
 
             </Marker>
