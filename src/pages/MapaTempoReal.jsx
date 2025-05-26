@@ -110,6 +110,7 @@ export default function MapaTempoReal() {
   const [carregando, setCarregando] = useState(true);
   const [modoHistorico, setModoHistorico] = useState(false);
   const [cpfSelecionado, setCpfSelecionado] = useState('');
+  const [tipoMapa, setTipoMapa] = useState('mapa'); // mapa ou satelite
   const [expandido, setExpandido] = useState(false);
 
   const [horas, setHoras] = useState(1);
@@ -231,6 +232,16 @@ export default function MapaTempoReal() {
         <Text>{modoHistorico ? 'Exibir Histórico' : 'Tempo Real'}</Text>
         </HStack>
 
+        <Select
+          size="sm"
+          value={tipoMapa}
+          onChange={(e) => setTipoMapa(e.target.value)}
+        >
+          <option value="mapa">🗺️ Mapa</option>
+          <option value="satelite">🛰️ Satélite</option>
+        </Select>
+
+
         {modoHistorico && (
         <>
             <Select
@@ -271,7 +282,14 @@ export default function MapaTempoReal() {
         <Spinner size="xl" position="absolute" top="50%" left="50%" />
       ) : (
         <MapContainer center={center} zoom={15} style={{ height: '100%', width: '100%' }} zoomControl={false}>
-          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+          <TileLayer
+              url={
+                tipoMapa === 'satelite'
+                  ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+                  : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+              }
+            />
+
           <RecenterMap center={center} />
           <CustomZoomControl isMobile={isMobile} />
 
