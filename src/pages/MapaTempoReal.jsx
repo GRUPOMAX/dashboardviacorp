@@ -314,7 +314,7 @@ export default function MapaTempoReal() {
 
         <Marker position={COORDENADA_QG} icon={qgIcon}>
         <Popup>
-            <Text fontWeight="bold">📍 Base Central (QG)</Text>
+            <Text fontWeight="bold">📍 Quartel General (QG)</Text>
         </Popup>
         </Marker>
 
