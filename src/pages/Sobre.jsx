@@ -21,7 +21,7 @@ export default function Sobre() {
         </Heading>
 
         <Text fontSize="md" color="gray.700">
-          Este sistema foi desenvolvido por <strong>João Carlos</strong> em Parceiria com a Empresa<strong> AppSystem </strong>com o objetivo de facilitar o controle e monitoramento de veículos em tempo real. A aplicação permite registrar dados de KM, abastecimentos, exibir mapas com trajetos históricos, e muito mais.
+          Este sistema foi desenvolvido por <strong>Jota(João Carlos)</strong> em Parceiria com sua Empresa<strong> AppSystem </strong>com o objetivo de facilitar o controle e monitoramento de veículos em tempo real. A aplicação permite registrar dados de KM, abastecimentos, exibir mapas com trajetos históricos, e muito mais.
         </Text>
 
         <Image

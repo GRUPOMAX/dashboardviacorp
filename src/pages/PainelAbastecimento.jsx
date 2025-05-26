@@ -3,6 +3,8 @@ import {
   Spinner, Progress, Text, VStack, HStack, Icon, useDisclosure, Divider, Badge, IconButton,
   Input, Select, FormControl, FormLabel
 } from '@chakra-ui/react';
+import { Tooltip } from '@chakra-ui/react'; // ✅ Certifique-se que está importado
+
 import { FiDroplet, FiEdit } from 'react-icons/fi';
 import { useEffect, useState } from 'react';
 import ModalUltimosAbastecimentos from '../components/ModalUltimosAbastecimentos';
@@ -17,6 +19,8 @@ export default function PainelAbastecimento() {
   const [dataFim, setDataFim] = useState('');
   const [modoCalculo, setModoCalculo] = useState('todos');
   const { isOpen, onOpen, onClose } = useDisclosure();
+  
+
 
   const { registros, veiculosUsuario, veiculosEmpresa, carregando, updateTrigger  } = useRequisicoesAbastecimento();
 
@@ -58,10 +62,11 @@ export default function PainelAbastecimento() {
     onOpen();
   };
 
-  const renderTanque = (litros, maxLitros = 60) => {
+  const renderTanque = (litros, maxLitros = 60, performance = 0) => {
     const percentual = (litros / maxLitros) * 100;
     const cor = percentual >= 70 ? 'green' : percentual > 30 ? 'yellow' : 'red';
     const status = percentual >= 70 ? 'Cheio' : percentual > 30 ? 'Médio' : 'Baixo';
+    const kmPossivel = performance > 0 ? (litros * performance).toFixed(0) : '-';
 
     return (
       <VStack align="start" spacing={1} mt={3}>
@@ -69,12 +74,30 @@ export default function PainelAbastecimento() {
           Nível do Tanque: <Badge colorScheme={cor}>{status}</Badge>
         </Text>
         <Progress value={percentual} colorScheme={cor} w="100%" borderRadius="lg" />
-        <Text fontSize="xs" color="gray.500">{litros.toFixed(2)} L</Text>
+        <HStack spacing={2}>
+          <Text fontSize="xs" color="gray.500">{litros.toFixed(2)} L</Text>
+              {performance > 0 && (
+                <Tooltip
+                  label={`Cálculo: ${litros.toFixed(2)} L × ${performance} km/L = ${kmPossivel} km`}
+                  aria-label="Resumo do cálculo"
+                  hasArrow
+                  placement="top"
+                  bg="gray.700"
+                  color="white"
+                  fontSize="xs"
+                >
+                  <Text fontSize="xs" color="gray.500" cursor="help">
+                    ≈ {kmPossivel} km restantes
+                  </Text>
+                </Tooltip>
+              )}
+        </HStack>
       </VStack>
     );
   };
 
-  const CardVeiculo = ({ nome, litros, maxLitros, onClick, onEditar }) => (
+
+  const CardVeiculo = ({ nome, litros, maxLitros, performance, onClick, onEditar }) => (
     <Box p={4} borderRadius="2xl" bgGradient="linear(to-r, white, gray.50)" boxShadow="sm" border="1px solid" borderColor="gray.200" transition="all 0.2s" w="100%">
       <HStack spacing={4} align="start" flexWrap="wrap">
         <Box bg="blue.100" w="42px" h="42px" display="flex" alignItems="center" justifyContent="center" borderRadius="full" flexShrink={0}>
@@ -82,12 +105,13 @@ export default function PainelAbastecimento() {
         </Box>
         <VStack align="start" spacing={0} flex={1} onClick={onClick} cursor="pointer" wordBreak="break-word">
           <Text fontWeight="semibold" fontSize="md">{nome}</Text>
-          {renderTanque(Number(litros), Number(maxLitros || 60))}
+          {renderTanque(Number(litros), Number(maxLitros || 60), Number(performance || 0))}
         </VStack>
         <IconButton size="sm" icon={<FiEdit />} colorScheme="blue" variant="ghost" aria-label="Editar Veículo" onClick={onEditar} />
       </HStack>
     </Box>
   );
+
 
   const {
     litrosVeiculosUsuarioNoPeriodo,
@@ -158,6 +182,8 @@ export default function PainelAbastecimento() {
                 key={i}
                 nome={v['MODEL-VEHICLE']}
                 litros={v.litrosPeriodo}
+                maxLitros={v['LITROS-MAXIMO'] || 60}
+                performance={v['KM-PERFORMACE'] || 0} // novo
                 onClick={() => abrirModal(v['MODEL-VEHICLE'], 'usuario')}
                 onEditar={() => abrirModalEdicao(v, 'usuario')}
               />
@@ -173,11 +199,13 @@ export default function PainelAbastecimento() {
                 nome={veic.veiculo}
                 litros={veic.litrosPeriodo}
                 maxLitros={Number(veic['LITROS-MAXIMO'])}
+                performance={veic['KM-PERFORMACE'] || 0} // ✅ ADICIONE ESTA LINHA
                 onClick={() => abrirModal(veic.veiculo, 'empresa')}
                 onEditar={() => abrirModalEdicao(veic, 'empresa')}
               />
             ))}
           </SimpleGrid>
+
 
           {!modoEdicao ? (
             <ModalUltimosAbastecimentos isOpen={isOpen} onClose={onClose} veiculo={veiculoSelecionado?.veiculo} tipo={veiculoSelecionado?.tipo} />

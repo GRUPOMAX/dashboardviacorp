@@ -215,7 +215,7 @@ export default function MapaTempoReal() {
     });
   };
 
-  const caminho = caminhoHistorico(); // ✅ Definido apenas uma vez
+  const caminho = caminhoHistorico(); 
 
 
   return (
