@@ -112,6 +112,9 @@ export default function MapaTempoReal() {
   const [cpfSelecionado, setCpfSelecionado] = useState('');
   const [tipoMapa, setTipoMapa] = useState('mapa'); // mapa ou satelite
   const [expandido, setExpandido] = useState(false);
+  const [center, setCenter] = useState(COORDENADA_QG);
+  const [jaCentralizou, setJaCentralizou] = useState(false);
+
 
   const [horas, setHoras] = useState(1);
 
@@ -161,17 +164,23 @@ export default function MapaTempoReal() {
     dayjs().diff(dayjs(pos.timestamp), 'second') <= INTERVALO_ONLINE_SEGUNDOS
   );
 
-  const center = (() => {
+
+  useEffect(() => {
+  if (!jaCentralizou && usuariosOnline.length > 0) {
+    const { latitude, longitude } = usuariosOnline[0][1];
+    setCenter([latitude, longitude]);
+    setJaCentralizou(true);
+  }
+  }, [usuariosOnline, jaCentralizou]);
+
+  useEffect(() => {
     if (modoHistorico && cpfSelecionado && historico[cpfSelecionado]?.length) {
       const ultima = historico[cpfSelecionado].slice(-1)[0];
-      return [ultima.latitude, ultima.longitude];
+      setCenter([ultima.latitude, ultima.longitude]);
     }
-    if (usuariosOnline.length > 0) {
-      const { latitude, longitude } = usuariosOnline[0][1];
-      return [latitude, longitude];
-    }
-    return COORDENADA_QG;
-  })();
+  }, [modoHistorico, cpfSelecionado, historico]);
+
+
 
   const caminhoHistorico = () => {
     if (!modoHistorico || !cpfSelecionado || !historico[cpfSelecionado]) return [];
