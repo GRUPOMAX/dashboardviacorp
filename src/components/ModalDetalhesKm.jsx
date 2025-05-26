@@ -23,6 +23,13 @@ export default function ModalDetalhesKm({ isOpen, onClose, dados, data, abasteci
   const urlImagemKmInicial = km['URL_IMG-KM-INICIAL'];
   const urlImagemKmFinal = km['URL_IMG-KM-FINAL'];
 
+  const dataInicio = dayjs(data, 'DD/MM/YYYY').isValid()
+  ? dayjs(data, 'DD/MM/YYYY').format('YYYY-MM-DD')
+  : dayjs().format('YYYY-MM-DD');
+
+  const dataFinalizacao = km?.DATA_FINALIZACAO;
+  const houveAtraso = dataFinalizacao && dataFinalizacao !== dataInicio;
+
   const comprovantesKm = [
     km['URL_IMG-KM-COMPROVANTE_ABASTECIMENTO_1'],
     km['URL_IMG-KM-COMPROVANTE_ABASTECIMENTO_2']
@@ -88,73 +95,84 @@ export default function ModalDetalhesKm({ isOpen, onClose, dados, data, abasteci
           </ModalHeader>
           <ModalCloseButton top={3} right={4} />
           <ModalBody pt={4}>
+
+          {houveAtraso && (
+            <Box p={3} bg="orange.100" borderRadius="md" borderLeft="4px solid #DD6B20">
+              <Text fontWeight="bold" color="orange.700">⚠ Atenção</Text>
+              <Text fontSize="sm" color="orange.700">
+                Este dia foi finalizado em atraso ({dayjs(dataFinalizacao).format('DD/MM/YYYY')}).
+              </Text>
+            </Box>
+          )}
+
+
             <VStack align="start" spacing={4}>
               {/* Veículo e KM */}
-<Box w="100%">
-  <HStack justify="space-between">
-    <Text><strong>Veículo:</strong> {km.VEICULO}</Text>
-    <Badge colorScheme="blue">{km.UNIDADE?.toUpperCase()}</Badge>
-  </HStack>
-  <Text fontSize="sm">
-    <strong>KM Inicial:</strong> {km['KM-INICIAL']} km às {km['HORA_KM-INICIAL']}
-  </Text>
-  <Text fontSize="sm">
-    <strong>KM Final:</strong> {km['KM-FINAL']} km às {km['HORA_KM-FINAL']}
-  </Text>
-  <Text fontSize="sm">
-    <strong>Total Rodado:</strong> {km['TOTAL-KM_RODADO']} {km.UNIDADE}
-  </Text>
+              <Box w="100%">
+                <HStack justify="space-between">
+                  <Text><strong>Veículo:</strong> {km.VEICULO}</Text>
+                  <Badge colorScheme="blue">{km.UNIDADE?.toUpperCase()}</Badge>
+                </HStack>
+                <Text fontSize="sm">
+                  <strong>KM Inicial:</strong> {km['KM-INICIAL']} km às {km['HORA_KM-INICIAL']}
+                </Text>
+                <Text fontSize="sm">
+                  <strong>KM Final:</strong> {km['KM-FINAL']} km às {km['HORA_KM-FINAL']}
+                </Text>
+                <Text fontSize="sm">
+                  <strong>Total Rodado:</strong> {km['TOTAL-KM_RODADO']} {km.UNIDADE}
+                </Text>
 
-  <Button
-    mt={2}
-    size="sm"
-    colorScheme="gray"
-    variant="outline"
-    onClick={() => setMostrarImagensKm(!mostrarImagensKm)}
-  >
-    {mostrarImagensKm ? 'Ocultar Imagens do KM' : 'Visualizar KM (Inicial e Final)'}
-  </Button>
+                <Button
+                  mt={2}
+                  size="sm"
+                  colorScheme="gray"
+                  variant="outline"
+                  onClick={() => setMostrarImagensKm(!mostrarImagensKm)}
+                >
+                  {mostrarImagensKm ? 'Ocultar Imagens do KM' : 'Visualizar KM (Inicial e Final)'}
+                </Button>
 
-  {mostrarImagensKm && (
-    <HStack spacing={4} mt={3} wrap="wrap">
-      <VStack spacing={1} align="center">
-        <Text fontSize="xs"><strong>KM Inicial</strong></Text>
-        {urlImagemKmInicial ? (
-          <Image
-            src={urlImagemKmInicial}
-            alt="KM Inicial"
-            maxW="120px"
-            borderRadius="md"
-            border="1px solid #ccc"
-            cursor="pointer"
-            onClick={() => openImageModal(urlImagemKmInicial)}
-            fallbackSrc="https://via.placeholder.com/120?text=Indisponível"
-          />
-        ) : (
-          <Text fontSize="xs" color="gray.500">Imagem não disponível</Text>
-        )}
-      </VStack>
+                {mostrarImagensKm && (
+                  <HStack spacing={4} mt={3} wrap="wrap">
+                    <VStack spacing={1} align="center">
+                      <Text fontSize="xs"><strong>KM Inicial</strong></Text>
+                      {urlImagemKmInicial ? (
+                        <Image
+                          src={urlImagemKmInicial}
+                          alt="KM Inicial"
+                          maxW="120px"
+                          borderRadius="md"
+                          border="1px solid #ccc"
+                          cursor="pointer"
+                          onClick={() => openImageModal(urlImagemKmInicial)}
+                          fallbackSrc="https://via.placeholder.com/120?text=Indisponível"
+                        />
+                      ) : (
+                        <Text fontSize="xs" color="gray.500">Imagem não disponível</Text>
+                      )}
+                    </VStack>
 
-      <VStack spacing={1} align="center">
-        <Text fontSize="xs"><strong>KM Final</strong></Text>
-        {urlImagemKmFinal ? (
-          <Image
-            src={urlImagemKmFinal}
-            alt="KM Final"
-            maxW="120px"
-            borderRadius="md"
-            border="1px solid #ccc"
-            cursor="pointer"
-            onClick={() => openImageModal(urlImagemKmFinal)}
-            fallbackSrc="https://via.placeholder.com/120?text=Indisponível"
-          />
-        ) : (
-          <Text fontSize="xs" color="gray.500">Imagem não disponível</Text>
-        )}
-      </VStack>
-    </HStack>
-  )}
-</Box>
+                    <VStack spacing={1} align="center">
+                      <Text fontSize="xs"><strong>KM Final</strong></Text>
+                      {urlImagemKmFinal ? (
+                        <Image
+                          src={urlImagemKmFinal}
+                          alt="KM Final"
+                          maxW="120px"
+                          borderRadius="md"
+                          border="1px solid #ccc"
+                          cursor="pointer"
+                          onClick={() => openImageModal(urlImagemKmFinal)}
+                          fallbackSrc="https://via.placeholder.com/120?text=Indisponível"
+                        />
+                      ) : (
+                        <Text fontSize="xs" color="gray.500">Imagem não disponível</Text>
+                      )}
+                    </VStack>
+                  </HStack>
+                )}
+              </Box>
 
 
               {/* Abastecimento */}
