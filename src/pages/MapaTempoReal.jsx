@@ -27,6 +27,7 @@ const COORDENADA_QG = [-20.360886959602578, -40.41844432562764]; // QG
 
 
 
+
 const getOperadoraIcon = (nome) => {
   const lower = nome?.toLowerCase();
   if (!lower) return <RadioTower size={14} />;
@@ -64,6 +65,13 @@ const qgIcon = new L.Icon({
   iconAnchor: [20, 40],
   popupAnchor: [0, -35],
 });
+const casaIcon = new L.Icon({
+  iconUrl: '/casa.png',
+  iconSize: [36, 36],
+  iconAnchor: [18, 36],
+  popupAnchor: [0, -36]
+});
+
 
 
 function RecenterMap({ center }) {
@@ -126,7 +134,7 @@ export default function MapaTempoReal() {
         const [tempoRealRes, historicoRes, usuariosRes] = await Promise.all([
           fetch('https://api.rastreioveiculos.nexusnerds.com.br/localizacoes/tempo-real'),
           fetch('https://api.rastreioveiculos.nexusnerds.com.br/localizacoes'),
-          fetch(`${NOCODB_URL}/api/v2/tables/msehqhsr7j040uq/records?fields=UnicID-CPF,picture-url,first_nome,last_nome`, {
+          fetch(`${NOCODB_URL}/api/v2/tables/msehqhsr7j040uq/records?fields=UnicID-CPF,picture-url,first_nome,last_nome,casa-coordenadas`, {
             headers: {
               'xc-token': NOCODB_TOKEN
             }
@@ -141,7 +149,8 @@ export default function MapaTempoReal() {
         usuariosData.list.forEach(user => {
           mapaUsuarios[user['UnicID-CPF']] = {
             nome: `${user.first_nome ?? ''} ${user.last_nome ?? ''}`.trim(),
-            foto: user['picture-url'] || user['picture_url'] || ''
+            foto: user['picture-url'] || user['picture_url'] || '',
+            casa: user['casa-coordenadas'] || null
           };
         });
 
@@ -408,6 +417,31 @@ export default function MapaTempoReal() {
             <Polyline positions={caminho} color="blue" />
         </>
         )}
+
+        {Object.entries(usuarios).map(([cpf, user]) => {
+            if (!user?.casa) return null;
+
+            const [lat, lng] = user.casa.split(',').map(Number);
+            if (isNaN(lat) || isNaN(lng)) return null;
+
+            return (
+              <Marker key={`casa-${cpf}`} position={[lat, lng]} icon={casaIcon}>
+                <Popup>
+                  <Text fontWeight="bold">🏠 Casa de {user.nome}</Text>
+                  <Text fontSize="xs">({lat.toFixed(5)}, {lng.toFixed(5)})</Text>
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ color: '#2B6CB0', fontSize: '0.7rem' }}
+                  >
+                    Ver no Google Maps
+                  </a>
+                </Popup>
+              </Marker>
+            );
+          })}
+
         </MapContainer>
       )}
     </Box>
