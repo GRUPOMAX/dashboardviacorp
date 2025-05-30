@@ -24,7 +24,10 @@ export default function RegistrosKm() {
   const [dadosSelecionados, setDadosSelecionados] = useState(null);
   const [dataSelecionada, setDataSelecionada] = useState('');
   const [filtroUsuario, setFiltroUsuario] = useState('');
-  const [filtroData, setFiltroData] = useState('');
+  const [filtroData, setFiltroData] = useState(dayjs().format('YYYY-MM-DD'));
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const [porPagina] = useState(10); // Pode ajustar esse valor conforme desejado
+
   const {
     isOpen: isOpenRelatorio,
     onOpen: onOpenRelatorio,
@@ -65,6 +68,33 @@ export default function RegistrosKm() {
     return veiculo?.['ABASTECIMENTO-ZERADO'] || [];
   };
 
+  const registrosFiltrados = registros
+  .filter((registro) => !filtroUsuario || registro['UnicID-CPF'] === filtroUsuario);
+
+  const registrosPaginados = registrosFiltrados.flatMap((registro) => {
+    const cpf = registro['UnicID-CPF'];
+    const nomeUsuario = buscarNomeUsuario(cpf);
+    const control = registro['KM-CONTROL-SEMANAL'] || {};
+
+    return Object.entries(control).flatMap(([data, lista]) =>
+      lista
+        .filter(() => !filtroData || dayjs(data).isSame(dayjs(filtroData), 'day'))
+        .map((item, i) => ({
+          cpf,
+          data,
+          nomeUsuario,
+          item,
+          index: i
+        }))
+    );
+  });
+
+  const totalPaginas = Math.ceil(registrosPaginados.length / porPagina);
+  const inicio = (paginaAtual - 1) * porPagina;
+  const fim = inicio + porPagina;
+  const paginaAtualDados = registrosPaginados.slice(inicio, fim);
+
+
   return (
     <Box>
       <Heading size="lg" mb={6}>Registros de KM</Heading>
@@ -104,7 +134,7 @@ export default function RegistrosKm() {
       ) : (
         <>
           {!isMobile ? (
-            <Box overflowX="auto" border="1px solid" borderColor="gray.200" rounded="md" bg="white" boxShadow="sm">
+            <Box overflowX="auto" border="1px solid" borderColor="gray.200" rounded="md" bg="white" boxShadow="sm" pb={6}>
               <Table variant="simple" size="md">
                 <Thead bg="gray.50">
                   <Tr>
@@ -118,44 +148,53 @@ export default function RegistrosKm() {
                     <Th><Icon as={FiDollarSign} mr={2} />Valor</Th>
                   </Tr>
                 </Thead>
-                <Tbody>
-                  {registros
-                    .filter((registro) => !filtroUsuario || registro['UnicID-CPF'] === filtroUsuario)
-                    .flatMap((registro) => {
-                      const cpf = registro['UnicID-CPF'];
-                      const nomeUsuario = buscarNomeUsuario(cpf);
-                      const control = registro['KM-CONTROL-SEMANAL'] || {};
-                      return Object.entries(control).flatMap(([data, lista]) =>
-                        lista
-                          .filter(() => !filtroData || dayjs(data).isSame(dayjs(filtroData), 'day'))
-                          .map((item, i) => {
-                            const km = item['KM-Control'];
-                            return (
-                              <Tr key={`${cpf}-${data}-${i}`} _hover={{ bg: 'gray.50', cursor: 'pointer' }}
-                                onClick={() => {
-                                  setDadosSelecionados(item);
-                                  setDataSelecionada(data);
-                                  onOpen();
-                                }}>
-                                <Td>{dayjs(data).format('DD/MM/YYYY')}</Td>
-                                <Td fontWeight="semibold">{nomeUsuario}</Td>
-                                <Td>{km?.['VEICULO'] ?? '-'}</Td>
-                                <Td>{item['Dia-da-Semana']}</Td>
-                                <Td><Badge colorScheme="blue">{km?.['TOTAL-KM_RODADO'] ?? 0} KM</Badge></Td>
-                                <Td>
-                                  <Badge colorScheme={km?.['ABASTECEU'] ? 'green' : 'gray'}>
-                                    {km?.['ABASTECEU'] ? 'SIM' : 'NÃO'}
-                                  </Badge>
-                                </Td>
-                                <Td>{km?.['TIPO_DE_ABASTECIMENTO'] ?? '-'}</Td>
-                                <Td>{km?.['VALOR_ABASTECIMENTO'] ?? '-'}</Td>
-                              </Tr>
-                            );
-                          })
+                  <Tbody>
+                    {paginaAtualDados.map(({ cpf, data, nomeUsuario, item, index }) => {
+                      const km = item['KM-Control'];
+                      return (
+                        <Tr key={`${cpf}-${data}-${index}`} _hover={{ bg: 'gray.50', cursor: 'pointer' }}
+                          onClick={() => {
+                            setDadosSelecionados(item);
+                            setDataSelecionada(data);
+                            onOpen();
+                          }}>
+                          <Td>{dayjs(data).format('DD/MM/YYYY')}</Td>
+                          <Td fontWeight="semibold">{nomeUsuario}</Td>
+                          <Td>{km?.['VEICULO'] ?? '-'}</Td>
+                          <Td>{item['Dia-da-Semana']}</Td>
+                          <Td><Badge colorScheme="blue">{km?.['TOTAL-KM_RODADO'] ?? 0} KM</Badge></Td>
+                          <Td>
+                            <Badge colorScheme={km?.['ABASTECEU'] ? 'green' : 'gray'}>
+                              {km?.['ABASTECEU'] ? 'SIM' : 'NÃO'}
+                            </Badge>
+                          </Td>
+                          <Td>{km?.['TIPO_DE_ABASTECIMENTO'] ?? '-'}</Td>
+                          <Td>{km?.['VALOR_ABASTECIMENTO'] ?? '-'}</Td>
+                        </Tr>
                       );
                     })}
-                </Tbody>
+                  </Tbody>
+
               </Table>
+
+              <HStack justify="center" mt={4}>
+                  <Button
+                    onClick={() => setPaginaAtual((prev) => Math.max(prev - 1, 1))}
+                    isDisabled={paginaAtual === 1}
+                  >
+                    Anterior
+                  </Button>
+                  <Text>
+                    Página {paginaAtual} de {totalPaginas}
+                  </Text>
+                  <Button
+                    onClick={() => setPaginaAtual((prev) => Math.min(prev + 1, totalPaginas))}
+                    isDisabled={paginaAtual === totalPaginas}
+                  >
+                    Próxima
+                  </Button>
+                </HStack>
+
             </Box>
           ) : (
             <Stack spacing={4}>
