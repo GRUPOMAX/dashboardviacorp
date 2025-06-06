@@ -3,12 +3,12 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
-  base: '/', // ou '/viacorp/' se for uma subpasta no GitHub Pages
+  base: '/',
   plugins: [
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      manifest: false, // ✅ usa o manifest.json externo da pasta public
+      manifest: false,
       includeAssets: [
         'favicon.svg',
         'icons/icon-192x192.png',
@@ -20,8 +20,14 @@ export default defineConfig({
       }
     })
   ],
+  optimizeDeps: {
+    include: ['leaflet-ant-path']
+  },
   build: {
     outDir: 'dist',
-    assetsDir: 'assets'
+    assetsDir: 'assets',
+    commonjsOptions: {
+      transformMixedEsModules: true
+    }
   }
 });

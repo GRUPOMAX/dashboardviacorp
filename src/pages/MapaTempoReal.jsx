@@ -19,6 +19,11 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import dayjs from 'dayjs';
 
+
+
+
+
+
 const NOCODB_URL = import.meta.env.VITE_NOCODB_URL;
 const NOCODB_TOKEN = import.meta.env.VITE_NOCODB_TOKEN;
 const INTERVALO_ONLINE_SEGUNDOS = 60;
@@ -122,6 +127,10 @@ export default function MapaTempoReal() {
   const [expandido, setExpandido] = useState(false);
   const [center, setCenter] = useState(COORDENADA_QG);
   const [jaCentralizou, setJaCentralizou] = useState(false);
+  const [trajetosTempoReal, setTrajetosTempoReal] = useState({});
+  const [velocidades, setVelocidades] = useState({});
+
+
 
 
   const [horas, setHoras] = useState(1);
@@ -173,6 +182,37 @@ export default function MapaTempoReal() {
     dayjs().diff(dayjs(pos.timestamp), 'second') <= INTERVALO_ONLINE_SEGUNDOS
   );
 
+  useEffect(() => {
+    setTrajetosTempoReal(prev => {
+      const novo = { ...prev };
+      const novasVelocidades = {};
+
+      for (const [cpf, { latitude, longitude }] of Object.entries(posicoes)) {
+        if (!novo[cpf]) novo[cpf] = [];
+        novo[cpf].push([latitude, longitude]);
+
+        // limita o histórico por CPF
+        if (novo[cpf].length > 200) novo[cpf].shift();
+
+        // cálculo de velocidade baseado nos 2 últimos pontos
+        const coords = novo[cpf];
+        if (coords.length >= 2) {
+          const [lat1, lon1] = coords[coords.length - 2];
+          const [lat2, lon2] = coords[coords.length - 1];
+          const distanciaKm = calcularDistanciaKm(lat1, lon1, lat2, lon2);
+          const tempoSegundos = 5;
+          const velocidade = (distanciaKm / tempoSegundos) * 3600; // km/h
+          novasVelocidades[cpf] = velocidade;
+        }
+      }
+
+      setVelocidades(novasVelocidades);
+      return novo;
+    });
+  }, [posicoes]);
+
+
+
 
   useEffect(() => {
   if (!jaCentralizou && usuariosOnline.length > 0) {
@@ -188,6 +228,38 @@ export default function MapaTempoReal() {
       setCenter([ultima.latitude, ultima.longitude]);
     }
   }, [modoHistorico, cpfSelecionado, historico]);
+
+  const calcularDistanciaKm = (lat1, lon1, lat2, lon2) => {
+  const R = 6371; // raio da Terra em km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+    Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLon / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
+
+
+  // Simula um "antPath" básico
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTrajetosTempoReal((prev) => {
+        const novo = {};
+        Object.entries(prev).forEach(([cpf, coords]) => {
+          if (coords.length > 1) {
+            novo[cpf] = [...coords.slice(1), coords[0]]; // desloca a linha
+          } else {
+            novo[cpf] = coords;
+          }
+        });
+        return novo;
+      });
+    }, 3000); // ciclo da "animação"
+    return () => clearInterval(interval);
+  }, []);
 
 
 
@@ -259,6 +331,20 @@ export default function MapaTempoReal() {
           <option value="satelite">🛰️ Satélite</option>
         </Select>
 
+          <Select
+            placeholder={modoHistorico ? "Usuário (histórico)" : "Usuário (trajeto ao vivo)"}
+            value={cpfSelecionado}
+            onChange={(e) => setCpfSelecionado(e.target.value)}
+            size="sm"
+          >
+            <option value="todos">Todos</option>
+            {Object.entries(usuarios).map(([cpf, { nome }]) => (
+              <option key={cpf} value={cpf}>{nome || cpf}</option>
+            ))}
+          </Select>
+
+
+
 
         {modoHistorico && (
         <>
@@ -283,6 +369,22 @@ export default function MapaTempoReal() {
             </Select>
         </>
         )}
+        {!modoHistorico && (
+          <Box w="full">
+            <IconButton
+              colorScheme="red"
+              size="sm"
+              variant="outline"
+              w="full"
+              icon={<svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 512 512"><path fill="currentColor" d="M432 32H320l-32-32H224l-32 32H80C53.49 32 32 53.49 32 80v48h448V80c0-26.51-21.49-48-48-48zm16 96H64v336c0 26.51 21.49 48 48 48h288c26.51 0 48-21.49 48-48V128z"/></svg>}
+              aria-label="Limpar rastros"
+              onClick={() => setTrajetosTempoReal({})}
+            />
+          </Box>
+        )}
+
+
+
     </VStack>
     </Box>
 
@@ -320,103 +422,120 @@ export default function MapaTempoReal() {
 
 
           {/* ✅ Tempo real: apenas online */}
-          {!modoHistorico && usuariosOnline.map(([cpf, { latitude, longitude, timestamp }]) => (
-            <Marker key={cpf} position={[latitude, longitude]} icon={getCustomIcon(cpf, true)}>
-              <Popup>
-                <Box p={1.5} bg="white" borderRadius="md" minW="200px" fontSize="xs" lineHeight="1.2">
-                  <HStack justify="space-between" mb={1}>
-                    <Text fontWeight="bold" fontSize="sm" color="gray.800">
-                      {usuarios[cpf]?.nome || 'Desconhecido'}
-                    </Text>
-                    <IconButton
-                      icon={<Info size={14} />}
-                      size="xs"
-                      variant="ghost"
-                      onClick={() => setExpandido(!expandido)}
-                      aria-label="Ver mais"
-                    />
-                  </HStack>
+          {!modoHistorico && usuariosOnline.map(([cpf, { latitude, longitude, timestamp }]) => {
+              const trajeto = trajetosTempoReal[cpf] || [];
+              const velocidade = velocidades[cpf];
 
-                  <VStack spacing={0.5} align="start">
-                    <HStack spacing={1}><Smartphone size={12} /><Text>CPF: {cpf}</Text></HStack>
-                    <HStack spacing={1}><MapPin size={12} /><Text>Verificação: {new Date(timestamp).toLocaleTimeString('pt-BR')}</Text></HStack>
+              if (trajeto.length >= 2) {
+                const [lat1, lon1] = trajeto[trajeto.length - 2];
+                const [lat2, lon2] = trajeto[trajeto.length - 1];
+                const distanciaKm = calcularDistanciaKm(lat1, lon1, lat2, lon2);
+                const tempoSegundos = 5;
+                const velocidade = velocidades[cpf];
+              }
 
-                    <HStack spacing={1}>
-                      {getRedeIcon(posicoes[cpf]?.rede)}
-                      <Text>{posicoes[cpf]?.rede || '-'}</Text>
+
+            return (
+              <Marker key={cpf} position={[latitude, longitude]} icon={getCustomIcon(cpf, true)}>
+                <Popup>
+                  <Box p={1.5} bg="white" borderRadius="md" minW="200px" fontSize="xs" lineHeight="1.2">
+                    <HStack justify="space-between" mb={1}>
+                      <Text fontWeight="bold" fontSize="sm" color="gray.800">
+                        {usuarios[cpf]?.nome || 'Desconhecido'}
+                      </Text>
+                      <IconButton
+                        icon={<Info size={14} />}
+                        size="xs"
+                        variant="ghost"
+                        onClick={() => setExpandido(!expandido)}
+                        aria-label="Ver mais"
+                      />
                     </HStack>
 
-                    {expandido && (
-                      <>
-                        <HStack spacing={1}>
-                          <Smartphone size={12} />
-                          <Text>{posicoes[cpf]?.dispositivo || '-'}</Text>
-                        </HStack>
+                    <VStack spacing={0.5} align="start">
+                      <HStack spacing={1}><Smartphone size={12} /><Text>CPF: {cpf}</Text></HStack>
+                      <HStack spacing={1}><MapPin size={12} /><Text>Verificação: {new Date(timestamp).toLocaleTimeString('pt-BR')}</Text></HStack>
+                      <HStack spacing={1}>
+                        {getRedeIcon(posicoes[cpf]?.rede)}
+                        <Text>{posicoes[cpf]?.rede || '-'}</Text>
+                      </HStack>
 
-                        <HStack spacing={1}>
-                          {getOperadoraIcon(posicoes[cpf]?.operadora)}
-                          <Text>{posicoes[cpf]?.operadora || '-'}</Text>
-                        </HStack>
-
-                        <HStack spacing={1}>
-                          {getSinalIcon(posicoes[cpf]?.sinal)}
-                          <Text>Sinal: {posicoes[cpf]?.sinal} / 4</Text>
-                        </HStack>
-
-                        <HStack spacing={1}>
-                          {getBateriaIcon(posicoes[cpf]?.bateria)}
-                          <Text>Bateria: {posicoes[cpf]?.bateria}%</Text>
-                        </HStack>
-                      </>
-                    )}
-                  </VStack>
-
-                  <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{
-                      color: '#2E9606',
-                      fontSize: '0.7rem',
-                      fontWeight: '500',
-                      display: 'inline-block',
-                      marginTop: '6px'
-                    }}
-                  >
-                    📍 Ver no Google Maps
-                  </a>
-                </Box>
-              </Popup>
+                        {typeof velocidade === 'number' && !isNaN(velocidade) && (
+                          <HStack spacing={1}>
+                            <Text>🚗 Velocidade:</Text>
+                            <Text fontWeight="bold" color="blue.600">{velocidade.toFixed(1)} km/h</Text>
+                          </HStack>
+                        )}
 
 
+                      {expandido && (
+                        <>
+                          <HStack spacing={1}><Smartphone size={12} /><Text>{posicoes[cpf]?.dispositivo || '-'}</Text></HStack>
+                          <HStack spacing={1}>{getOperadoraIcon(posicoes[cpf]?.operadora)}<Text>{posicoes[cpf]?.operadora || '-'}</Text></HStack>
+                          <HStack spacing={1}>{getSinalIcon(posicoes[cpf]?.sinal)}<Text>Sinal: {posicoes[cpf]?.sinal} / 4</Text></HStack>
+                          <HStack spacing={1}>{getBateriaIcon(posicoes[cpf]?.bateria)}<Text>Bateria: {posicoes[cpf]?.bateria}%</Text></HStack>
+                        </>
+                      )}
+                    </VStack>
 
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{
+                        color: '#2E9606',
+                        fontSize: '0.7rem',
+                        fontWeight: '500',
+                        display: 'inline-block',
+                        marginTop: '6px'
+                      }}
+                    >
+                      📍 Ver no Google Maps
+                    </a>
+                  </Box>
+                </Popup>
+              </Marker>
+            );
+          })}
 
-            </Marker>
-          ))}
 
           {/* ✅ Histórico */}
-        {modoHistorico && caminho.length > 0 && (
-        <>
-            <Marker
-            position={caminho[caminho.length - 1]}
-            icon={getCustomIcon(cpfSelecionado, false)}
-            >
-            <Popup>
-                <Text><strong>Nome:</strong> {usuarios[cpfSelecionado]?.nome || cpfSelecionado}</Text>
-                <a
-                href={`https://www.google.com/maps/search/?api=1&query=${caminho[caminho.length - 1].join(',')}`}
-                target="_blank"
-                rel="noreferrer"
-                style={{ color: '#3182ce', textDecoration: 'underline' }}
-                >
-                Ver no Google Maps
-                </a>
-            </Popup>
-            </Marker>
+          {modoHistorico && caminho.length > 0 && (
+          <>
+              <Marker
+              position={caminho[caminho.length - 1]}
+              icon={getCustomIcon(cpfSelecionado, false)}
+              >
+              <Popup>
+                  <Text><strong>Nome:</strong> {usuarios[cpfSelecionado]?.nome || cpfSelecionado}</Text>
+                  <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${caminho[caminho.length - 1].join(',')}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ color: '#3182ce', textDecoration: 'underline' }}
+                  >
+                  Ver no Google Maps
+                  </a>
+              </Popup>
+              </Marker>
 
-            <Polyline positions={caminho} color="blue" />
-        </>
-        )}
+              <Polyline positions={caminho} color="blue" />
+          </>
+          )}
+
+
+
+        
+      {!modoHistorico && Object.entries(trajetosTempoReal).map(([cpf, coords]) => {
+        if (cpfSelecionado !== 'todos' && cpfSelecionado !== cpf) return null;
+        if (coords.length < 2) return null;
+
+        return (
+          <Polyline key={cpf} positions={coords} color="green" />
+        );
+      })}
+
+      
 
         {Object.entries(usuarios).map(([cpf, user]) => {
             if (!user?.casa) return null;
@@ -444,6 +563,7 @@ export default function MapaTempoReal() {
 
         </MapContainer>
       )}
+
     </Box>
   );
 }
