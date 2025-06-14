@@ -137,46 +137,80 @@ export default function MapaTempoReal() {
 
   const isMobile = useBreakpointValue({ base: true, md: false });
 
-  useEffect(() => {
-    const buscar = async () => {
-      try {
-        const [tempoRealRes, historicoRes, usuariosRes] = await Promise.all([
-          fetch('https://api.rastreioveiculos.nexusnerds.com.br/localizacoes/tempo-real'),
-          fetch('https://api.rastreioveiculos.nexusnerds.com.br/localizacoes'),
-          fetch(`${NOCODB_URL}/api/v2/tables/msehqhsr7j040uq/records?fields=UnicID-CPF,picture-url,first_nome,last_nome,casa-coordenadas`, {
-            headers: {
-              'xc-token': NOCODB_TOKEN
-            }
-          })
-        ]);
+useEffect(() => {
+  const fetchWithRetry = async (url, options = {}, attempt = 1, maxAttempts = 3) => {
+    try {
+      const res = await fetch(url, {
+        ...options,
+        signal: AbortSignal.timeout(30000),
+        headers: { ...options.headers, 'Content-Type': 'application/json' },
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status} - ${res.statusText}`);
+      const data = await res.json();
+      console.log(`Resposta de ${url}:`, data);
+      return data;
+    } catch (err) {
+      console.error(`Erro ao buscar ${url} (tentativa ${attempt}): ${err.message}`);
+      if (attempt < maxAttempts) {
+        const delay = Math.pow(2, attempt) * 1000;
+        console.log(`Retry após ${delay}ms`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return fetchWithRetry(url, options, attempt + 1, maxAttempts);
+      }
+      throw err;
+    }
+  };
 
-        const tempoReal = await tempoRealRes.json();
-        const historicoCompleto = await historicoRes.json();
-        const usuariosData = await usuariosRes.json();
+  const buscar = async () => {
+    setCarregando(true);
+    try {
+      const [tempoRealRes, historicoRes, usuariosRes] = await Promise.all([
+        fetchWithRetry('https://api.rastreioveiculos.nexusnerds.com.br/localizacoes/tempo-real'),
+        fetchWithRetry('https://api.rastreioveiculos.nexusnerds.com.br/localizacoes'),
+        fetchWithRetry(`${NOCODB_URL}/api/v2/tables/msehqhsr7j040uq/records?fields=UnicID-CPF,picture-url,first_nome,last_nome,casa-coordenadas`, {
+          headers: { 'xc-token': NOCODB_TOKEN },
+        }),
+      ]);
 
-        const mapaUsuarios = {};
-        usuariosData.list.forEach(user => {
+      // Validação dos dados
+      if (!tempoRealRes || typeof tempoRealRes !== 'object') {
+        console.error('Dados de tempo real inválidos:', tempoRealRes);
+        throw new Error('Resposta de tempo real inválida');
+      }
+      if (!historicoRes || typeof historicoRes !== 'object') {
+        console.error('Dados de histórico inválidos:', historicoRes);
+        throw new Error('Resposta de histórico inválida');
+      }
+      if (!usuariosRes?.list || !Array.isArray(usuariosRes.list)) {
+        console.error('Dados de usuários inválidos:', usuariosRes);
+        throw new Error('Resposta de usuários inválida');
+      }
+
+      const mapaUsuarios = {};
+      usuariosRes.list.forEach(user => {
+        if (user['UnicID-CPF']) {
           mapaUsuarios[user['UnicID-CPF']] = {
             nome: `${user.first_nome ?? ''} ${user.last_nome ?? ''}`.trim(),
             foto: user['picture-url'] || user['picture_url'] || '',
-            casa: user['casa-coordenadas'] || null
+            casa: user['casa-coordenadas'] || null,
           };
-        });
+        }
+      });
 
+      setPosicoes(tempoRealRes);
+      setHistorico(historicoRes);
+      setUsuarios(mapaUsuarios);
+      setCarregando(false);
+    } catch (err) {
+      console.error('Erro ao buscar dados:', err);
+      setCarregando(true); // Mantém carregando até sucesso
+    }
+  };
 
-        setPosicoes(tempoReal);
-        setHistorico(historicoCompleto);
-        setUsuarios(mapaUsuarios);
-        setCarregando(false);
-      } catch (err) {
-        console.error('Erro ao buscar dados:', err);
-      }
-    };
-
-    buscar();
-    const intervalo = setInterval(buscar, 5000);
-    return () => clearInterval(intervalo);
-  }, []);
+  buscar();
+  const intervalo = setInterval(buscar, 15000); // Aumentado para 15 segundos
+  return () => clearInterval(intervalo);
+}, []);
 
   const usuariosOnline = Object.entries(posicoes).filter(([_, pos]) =>
     dayjs().diff(dayjs(pos.timestamp), 'second') <= INTERVALO_ONLINE_SEGUNDOS
