@@ -63,14 +63,14 @@ const handleSalvar = async () => {
         'LITROS-MAXIMO': Number(form['LITROS-MAXIMO']),
         'ABASTECIMENTO-DISPONIVELE-LITRO': Number(form['ABASTECIMENTO-DISPONIVELE-LITRO'])
       };
-      const response = await axios.patch(`${BASE_URL}/m1sy388a4zv1kgl/records`, payload, {
+      const response = await axios.patch(`${BASE_URL}/md6hsq8rx1mmxg2/records`, payload, {
         headers: { 'xc-token': TOKEN }
       });
       console.log('✅ PATCH usuário OK:', response.data);
 
     } else if (tipo === 'empresa') {
       console.log('🔍 Buscando veículos da empresa...');
-      const { data } = await axios.get(`${BASE_URL}/mz92fb5ps4z32br/records`, {
+      const { data } = await axios.get(`${BASE_URL}/mu0erb59zudhecf/records`, {
         headers: { 'xc-token': TOKEN }
       });
 
@@ -122,7 +122,7 @@ const handleSalvar = async () => {
         'Vehicle-Standard': JSON.stringify(listaAtualizada)
       };
 
-      const res = await axios.patch(`${BASE_URL}/mz92fb5ps4z32br/records`, payload, {
+      const res = await axios.patch(`${BASE_URL}/mu0erb59zudhecf/records`, payload, {
         headers: { 'xc-token': TOKEN }
       });
 

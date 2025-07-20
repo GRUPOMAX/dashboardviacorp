@@ -21,7 +21,7 @@ export default function ModalUltimosAbastecimentos({ isOpen, onClose, veiculo, t
         const headers = { 'xc-token': NOCODB_TOKEN };
 
         // 🔄 Mapeia CPF → Nome do usuário
-        const resUsuarios = await fetch(`https://nocodb.nexusnerds.com.br/api/v2/tables/msehqhsr7j040uq/records?limit=1000`, { headers });
+        const resUsuarios = await fetch(`https://nocodb.nexusnerds.com.br/api/v2/tables/mngm0skrjiqa8cf/records?limit=1000`, { headers });
         const listaUsuarios = await resUsuarios.json();
         const mapaUsuarios = {};
         listaUsuarios.list.forEach(u => {
@@ -54,7 +54,7 @@ export default function ModalUltimosAbastecimentos({ isOpen, onClose, veiculo, t
           });
 
           // ➕ Inclui registros do campo ABASTECIMENTO-ZERADO (tabela DATA - [VEHICLE])
-          const resZerado = await fetch(`https://nocodb.nexusnerds.com.br/api/v2/tables/m1sy388a4zv1kgl/records`, { headers });
+          const resZerado = await fetch(`https://nocodb.nexusnerds.com.br/api/v2/tables/md6hsq8rx1mmxg2/records`, { headers });
           const dadosZerado = await resZerado.json();
           dadosZerado.list.forEach(entry => {
             if (entry['MODEL-VEHICLE']?.toLowerCase() !== veiculo?.toLowerCase()) return;

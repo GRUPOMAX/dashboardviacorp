@@ -47,7 +47,7 @@ export default function Usuarios() {
         const cpfAntigo = usuarios.find(u => u.Id === dados.Id)?.['UnicID-CPF'];
 
         if (cpfAntigo && cpfAntigo !== cpfNovo) {
-          for (const tableId of ['m0hj8eje9k5w4c0', 'm1sy388a4zv1kgl']) {
+          for (const tableId of ['mcfjf5y9bb4z5h0', 'md6hsq8rx1mmxg2']) {
             const res = await fetch(`${BASE_URL}/${tableId}/records?where=(UnicID-CPF,eq,${cpfAntigo})`, {
               headers: { 'xc-token': TOKEN }
             });
@@ -100,7 +100,7 @@ export default function Usuarios() {
 
       await deletarUsuario(id);
 
-      for (const tableId of ['m0hj8eje9k5w4c0', 'm1sy388a4zv1kgl']) {
+      for (const tableId of ['mcfjf5y9bb4z5h0', 'md6hsq8rx1mmxg2']) {
         const res = await fetch(`${BASE_URL}/${tableId}/records?where=(UnicID-CPF,eq,${cpf})`, {
           headers: { 'xc-token': TOKEN }
         });

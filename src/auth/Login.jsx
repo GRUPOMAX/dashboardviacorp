@@ -12,7 +12,7 @@ export default function Login({ onLogin }) {
 
   const handleLogin = async () => {
     try {
-      const { data } = await axios.get(`${API_URL}/api/v2/tables/m98ivs3k3csc04e/records`, {
+      const { data } = await axios.get(`${API_URL}/api/v2/tables/m1b5pe8z01t5uz1/records`, {
         headers: { 'xc-token': API_TOKEN }
       });
 

@@ -28,7 +28,7 @@ export default function Sobre() {
   useEffect(() => {
     const fetchDadosAdmin = async () => {
       try {
-        const res = await fetch(`${NOCODB_URL}/api/v2/tables/m98ivs3k3csc04e/records`, {
+        const res = await fetch(`${NOCODB_URL}/api/v2/tables/m1b5pe8z01t5uz1/records`, {
           headers: { 'xc-token': NOCODB_TOKEN },
         });
         const data = await res.json();

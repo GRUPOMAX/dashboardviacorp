@@ -53,7 +53,7 @@ export default function ModalEditarUsuario({ isOpen, onClose, dados, onAtualizad
   };
 
   const atualizarCPFEmTabelasRelacionadas = async (cpfAntigo, cpfNovo) => {
-    const tabelas = ['m0hj8eje9k5w4c0', 'm1sy388a4zv1kgl'];
+    const tabelas = ['mcfjf5y9bb4z5h0', 'md6hsq8rx1mmxg2'];
     for (const tabela of tabelas) {
       const res = await fetch(`${BASE_URL}/${tabela}/records?where=(UnicID-CPF,eq,${cpfAntigo})`, {
         headers: { 'xc-token': TOKEN }
@@ -90,7 +90,7 @@ export default function ModalEditarUsuario({ isOpen, onClose, dados, onAtualizad
       const cpfAntigo = dados?.['UnicID-CPF'];
       const cpfNovo = form.CPF;
 
-      await axios.patch(`${BASE_URL}/msehqhsr7j040uq/records`, { Id: form.Id, ...payload }, {
+      await axios.patch(`${BASE_URL}/mngm0skrjiqa8cf/records`, { Id: form.Id, ...payload }, {
         headers: { 'xc-token': TOKEN }
       });
 

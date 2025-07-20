@@ -27,14 +27,14 @@ export default function ListaAbastecimentos() {
       try {
         const headers = { 'xc-token': NOCODB_TOKEN };
 
-        const resUsers = await axios.get(`${NOCODB_URL}/api/v2/tables/msehqhsr7j040uq/records?limit=1000`, { headers });
+        const resUsers = await axios.get(`${NOCODB_URL}/api/v2/tables/mngm0skrjiqa8cf/records?limit=1000`, { headers });
         const mapaUsuarios = {};
         resUsers.data.list.forEach(u => {
           const nomeCompleto = `${u.first_nome ?? ''} ${u.last_nome ?? ''}`.trim();
           mapaUsuarios[u['UnicID-CPF']] = nomeCompleto || 'Usuário';
         });
 
-        const resKm = await axios.get(`${NOCODB_URL}/api/v2/tables/m0hj8eje9k5w4c0/records?limit=1000`, { headers });
+        const resKm = await axios.get(`${NOCODB_URL}/api/v2/tables/mcfjf5y9bb4z5h0/records?limit=1000`, { headers });
         const listaKM = resKm.data.list.flatMap(user => {
           const cpf = user['UnicID-CPF'];
           const nomeUsuario = mapaUsuarios[cpf] || 'Desconhecido';
@@ -57,7 +57,7 @@ export default function ListaAbastecimentos() {
           );
         });
 
-        const resUserVehicles = await axios.get(`${NOCODB_URL}/api/v2/tables/m1sy388a4zv1kgl/records?limit=1000`, { headers });
+        const resUserVehicles = await axios.get(`${NOCODB_URL}/api/v2/tables/md6hsq8rx1mmxg2/records?limit=1000`, { headers });
         const abastecimentosZerado = resUserVehicles.data.list.flatMap(veiculo => {
           const cpf = veiculo['UnicID-CPF'];
           const nomeUsuario = mapaUsuarios[cpf] || 'Desconhecido';
@@ -70,7 +70,7 @@ export default function ListaAbastecimentos() {
           }));
         });
 
-        const resStandardVehicles = await axios.get(`${NOCODB_URL}/api/v2/tables/mz92fb5ps4z32br/records?limit=1000`, { headers });
+        const resStandardVehicles = await axios.get(`${NOCODB_URL}/api/v2/tables/mu0erb59zudhecf/records?limit=1000`, { headers });
         const abastecimentosEmpresa = resStandardVehicles.data.list.flatMap(empresa =>
           (empresa.comprovante || []).map(item => ({
             ...item,

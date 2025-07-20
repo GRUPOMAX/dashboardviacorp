@@ -167,7 +167,7 @@ useEffect(() => {
       const [tempoRealRes, historicoRes, usuariosRes] = await Promise.all([
         fetchWithRetry('https://api.rastreioveiculos.nexusnerds.com.br/localizacoes/tempo-real'),
         fetchWithRetry('https://api.rastreioveiculos.nexusnerds.com.br/localizacoes'),
-        fetchWithRetry(`${NOCODB_URL}/api/v2/tables/msehqhsr7j040uq/records?fields=UnicID-CPF,picture-url,first_nome,last_nome,casa-coordenadas`, {
+        fetchWithRetry(`${NOCODB_URL}/api/v2/tables/mngm0skrjiqa8cf/records?fields=UnicID-CPF,picture-url,first_nome,last_nome,casa-coordenadas`, {
           headers: { 'xc-token': NOCODB_TOKEN },
         }),
       ]);
